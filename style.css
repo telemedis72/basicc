@@ -1,0 +1,638 @@
+/* ================================================================
+   style.css — Template Undangan Digital
+   ================================================================
+   Daftar Isi:
+   1. Reset & Variabel
+   2. Tipografi Global
+   3. Cover Overlay
+   4. Tombol Musik
+   5. Konten Utama & Helper
+   6. Hero Section
+   7. Divider Dekoratif
+   8. Acara (Detail)
+   9. Countdown
+   10. Galeri
+   11. Lokasi & Maps
+   12. Ucapan
+   13. Share
+   14. Footer
+   15. Animasi & Keyframes
+   ================================================================ */
+
+
+/* ────────────────────────────────────────────────────────────────
+   1. RESET & VARIABEL — ubah warna tema di sini
+   ──────────────────────────────────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  /* ============================================================
+     WARNA TEMA — sesuaikan dengan identitas acara Anda
+     ============================================================ */
+  --clr-bg:       #faf7f4;        /* latar halaman */
+  --clr-surface:  #ffffff;        /* kartu / section */
+  --clr-gold:     #b8985a;        /* aksen utama (emas) */
+  --clr-gold-lt:  #e8d9b5;        /* aksen ringan */
+  --clr-dark:     #2b2220;        /* teks judul */
+  --clr-body:     #5a4f4a;        /* teks isi */
+  --clr-muted:    #9e8e89;        /* teks kecil / label */
+  --clr-wa:       #25d366;        /* warna WhatsApp */
+
+  /* Tipografi */
+  --ff-display: 'Cormorant Garamond', Georgia, serif;
+  --ff-body:    'Jost', sans-serif;
+
+  /* Jarak */
+  --section-gap: 3.5rem;
+  --card-radius: 1rem;
+  --max-w: 480px;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  background-color: var(--clr-bg);
+  color: var(--clr-body);
+  font-family: var(--ff-body);
+  font-size: 15px;
+  line-height: 1.7;
+  -webkit-font-smoothing: antialiased;
+}
+
+img { max-width: 100%; display: block; }
+button { cursor: pointer; border: none; background: none; font-family: inherit; }
+a { text-decoration: none; color: inherit; }
+
+
+/* ────────────────────────────────────────────────────────────────
+   2. TIPOGRAFI GLOBAL
+   ──────────────────────────────────────────────────────────────── */
+.section-label {
+  font-family: var(--ff-body);
+  font-size: 0.7rem;
+  font-weight: 500;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--clr-gold);
+  margin-bottom: 0.4rem;
+}
+
+.section-title {
+  font-family: var(--ff-display);
+  font-size: 2rem;
+  font-weight: 400;
+  color: var(--clr-dark);
+  margin-bottom: 1.5rem;
+}
+
+
+/* ────────────────────────────────────────────────────────────────
+   3. COVER OVERLAY
+   ──────────────────────────────────────────────────────────────── */
+.cover-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+/* Background gambar */
+.cover-bg {
+  position: absolute;
+  inset: 0;
+  /* ============================================================
+     GANTI URL di bawah dengan foto background cover Anda
+     ============================================================ */
+  background-image: url('https://images.unsplash.com/photo-1532712938310-34cb3982ef74?w=800&q=80');
+  background-size: cover;
+  background-position: center;
+  filter: brightness(0.55);
+  transform: scale(1.04);
+  transition: transform 8s ease;
+}
+.cover-overlay:hover .cover-bg { transform: scale(1.0); }
+
+/* Dekorasi sudut (border ornamen) */
+.cover-deco {
+  position: absolute;
+  width: 130px;
+  height: 130px;
+  border: 1.5px solid rgba(232, 217, 181, 0.55);
+  pointer-events: none;
+}
+.cover-deco.top-left    { top: 24px; left: 24px; border-right: none; border-bottom: none; }
+.cover-deco.bottom-right{ bottom: 24px; right: 24px; border-left: none; border-top: none; }
+
+/* Teks di atas cover */
+.cover-content {
+  position: relative;
+  z-index: 2;
+  text-align: center;
+  padding: 2rem 1.5rem;
+  color: #fff;
+  max-width: var(--max-w);
+  width: 100%;
+  animation: fadeUp 1.2s ease both;
+}
+
+.cover-label {
+  font-family: var(--ff-body);
+  font-size: 0.7rem;
+  font-weight: 500;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--clr-gold-lt);
+  margin-bottom: 1rem;
+}
+
+.cover-names {
+  font-family: var(--ff-display);
+  font-size: clamp(2.6rem, 10vw, 4.2rem);
+  font-weight: 300;
+  line-height: 1.15;
+  letter-spacing: 0.02em;
+  color: #fff;
+  margin-bottom: 1rem;
+}
+.cover-names span {
+  display: block;
+  font-style: italic;
+  font-size: 1.4em;
+  color: var(--clr-gold-lt);
+  line-height: 1;
+  margin: 0.1em 0;
+}
+
+.cover-quote {
+  font-size: 0.82rem;
+  font-style: italic;
+  color: rgba(255,255,255,0.7);
+  max-width: 320px;
+  margin: 0 auto 2rem;
+  line-height: 1.6;
+}
+
+/* Tombol Buka Undangan */
+.btn-buka {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.8rem 2rem;
+  border: 1.5px solid rgba(232,217,181,0.8);
+  border-radius: 2rem;
+  color: #fff;
+  font-family: var(--ff-body);
+  font-size: 0.82rem;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  background: rgba(255,255,255,0.08);
+  backdrop-filter: blur(4px);
+  transition: background 0.3s, border-color 0.3s, transform 0.2s;
+}
+.btn-buka:hover {
+  background: rgba(184,152,90,0.35);
+  border-color: var(--clr-gold-lt);
+  transform: translateY(-2px);
+}
+.btn-buka svg { transition: transform 0.3s; }
+.btn-buka:hover svg { transform: translateX(4px); }
+
+/* Animasi fade-out saat tutup */
+.cover-overlay.fade-out {
+  animation: fadeOut 0.8s ease forwards;
+}
+
+
+/* ────────────────────────────────────────────────────────────────
+   4. TOMBOL MUSIK
+   ──────────────────────────────────────────────────────────────── */
+.btn-musik {
+  position: fixed;
+  bottom: 1.2rem;
+  right: 1.2rem;
+  z-index: 90;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--clr-gold);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 16px rgba(184,152,90,0.4);
+  transition: transform 0.2s, background 0.2s;
+}
+.btn-musik:hover { transform: scale(1.08); background: var(--clr-dark); }
+
+
+/* ────────────────────────────────────────────────────────────────
+   5. KONTEN UTAMA & HELPER
+   ──────────────────────────────────────────────────────────────── */
+.main-content {
+  max-width: var(--max-w);
+  margin: 0 auto;
+  background: var(--clr-surface);
+  min-height: 100vh;
+  overflow: hidden;
+}
+
+.section {
+  padding: 2.8rem 1.6rem;
+  text-align: center;
+}
+
+/* Utility class */
+.hidden { display: none !important; }
+
+/* Animasi masuk saat scroll */
+.fade-in-up {
+  opacity: 0;
+  transform: translateY(28px);
+  transition: opacity 0.7s ease, transform 0.7s ease;
+}
+.fade-in-up.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+
+/* ────────────────────────────────────────────────────────────────
+   6. HERO SECTION
+   ──────────────────────────────────────────────────────────────── */
+.hero { padding: 0 !important; }
+
+.hero-img-wrap {
+  position: relative;
+  height: 360px;
+  overflow: hidden;
+}
+.hero-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top center;
+  transition: transform 6s ease;
+}
+.hero-img-wrap:hover .hero-img { transform: scale(1.03); }
+
+.hero-img-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, transparent 30%, rgba(43,34,32,0.5));
+}
+
+.hero-text {
+  padding: 2.5rem 1.6rem 1.5rem;
+  background: var(--clr-surface);
+}
+
+.mempelai-names {
+  font-family: var(--ff-display);
+  font-size: clamp(1.8rem, 8vw, 2.8rem);
+  font-weight: 300;
+  line-height: 1.3;
+  color: var(--clr-dark);
+  margin-bottom: 0.8rem;
+}
+.mempelai-names em {
+  display: block;
+  font-size: 1.6em;
+  line-height: 1;
+  color: var(--clr-gold);
+  font-style: italic;
+  margin: 0.05em 0;
+}
+
+.hero-sub {
+  font-size: 0.85rem;
+  color: var(--clr-muted);
+  max-width: 300px;
+  margin: 0 auto;
+}
+
+
+/* ────────────────────────────────────────────────────────────────
+   7. DIVIDER DEKORATIF
+   ──────────────────────────────────────────────────────────────── */
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  padding: 0 1.6rem;
+  color: var(--clr-gold-lt);
+}
+.divider::before,
+.divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--clr-gold-lt);
+}
+.divider span {
+  font-size: 0.9rem;
+  color: var(--clr-gold);
+}
+
+
+/* ────────────────────────────────────────────────────────────────
+   8. ACARA (Detail)
+   ──────────────────────────────────────────────────────────────── */
+.acara-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.acara-card {
+  background: var(--clr-bg);
+  border: 1px solid var(--clr-gold-lt);
+  border-radius: var(--card-radius);
+  padding: 1.4rem 1rem;
+}
+.acara-card .acara-ikon { font-size: 1.6rem; margin-bottom: 0.5rem; }
+.acara-card h4 {
+  font-family: var(--ff-display);
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--clr-dark);
+  margin-bottom: 0.4rem;
+}
+.acara-card p {
+  font-size: 0.82rem;
+  color: var(--clr-body);
+  line-height: 1.5;
+}
+
+
+/* ────────────────────────────────────────────────────────────────
+   9. COUNTDOWN
+   ──────────────────────────────────────────────────────────────── */
+.countdown-section {
+  background: var(--clr-dark);
+  color: #fff;
+}
+.countdown-section .section-label { color: var(--clr-gold-lt); }
+
+.countdown-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.2rem;
+  flex-wrap: nowrap;
+}
+
+.countdown-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 62px;
+}
+.countdown-item span {
+  font-family: var(--ff-display);
+  font-size: clamp(2rem, 8vw, 3rem);
+  font-weight: 300;
+  color: var(--clr-gold-lt);
+  line-height: 1;
+}
+.countdown-item label {
+  font-size: 0.65rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.5);
+  margin-top: 0.3rem;
+}
+
+.countdown-sep {
+  font-family: var(--ff-display);
+  font-size: 2rem;
+  color: var(--clr-gold);
+  line-height: 1;
+  padding-bottom: 0.5rem;
+  align-self: flex-start;
+  margin-top: 0.1rem;
+}
+
+
+/* ────────────────────────────────────────────────────────────────
+   10. GALERI
+   ──────────────────────────────────────────────────────────────── */
+.galeri-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.6rem;
+}
+
+.galeri-img {
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+  border-radius: 0.5rem;
+  transition: transform 0.35s ease, filter 0.35s ease;
+}
+.galeri-img:hover {
+  transform: scale(1.03);
+  filter: brightness(1.05);
+}
+
+
+/* ────────────────────────────────────────────────────────────────
+   11. LOKASI & MAPS
+   ──────────────────────────────────────────────────────────────── */
+.lokasi-alamat {
+  font-size: 0.85rem;
+  color: var(--clr-muted);
+  margin-bottom: 1.2rem;
+}
+
+.maps-wrap {
+  border-radius: var(--card-radius);
+  overflow: hidden;
+  border: 1px solid var(--clr-gold-lt);
+  margin-bottom: 1.2rem;
+}
+.maps-wrap iframe {
+  width: 100%;
+  height: 220px;
+  display: block;
+  border: none;
+}
+
+/* Tombol outline (digunakan di lokasi & dsb) */
+.btn-outline {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.7rem 1.5rem;
+  border: 1.5px solid var(--clr-gold);
+  border-radius: 2rem;
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: var(--clr-gold);
+  letter-spacing: 0.05em;
+  transition: background 0.25s, color 0.25s;
+}
+.btn-outline:hover {
+  background: var(--clr-gold);
+  color: #fff;
+}
+
+
+/* ────────────────────────────────────────────────────────────────
+   12. UCAPAN
+   ──────────────────────────────────────────────────────────────── */
+.ucapan-input-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  margin-bottom: 1.5rem;
+}
+
+.ucapan-input,
+.ucapan-textarea {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--clr-gold-lt);
+  border-radius: 0.6rem;
+  font-family: var(--ff-body);
+  font-size: 0.9rem;
+  color: var(--clr-dark);
+  background: var(--clr-bg);
+  outline: none;
+  resize: none;
+  transition: border-color 0.2s;
+}
+.ucapan-input:focus,
+.ucapan-textarea:focus {
+  border-color: var(--clr-gold);
+}
+
+.btn-primary {
+  padding: 0.75rem 1.5rem;
+  background: var(--clr-gold);
+  color: #fff;
+  border-radius: 2rem;
+  font-size: 0.85rem;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  transition: background 0.25s, transform 0.2s;
+}
+.btn-primary:hover {
+  background: var(--clr-dark);
+  transform: translateY(-2px);
+}
+
+/* Daftar ucapan masuk */
+.ucapan-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  text-align: left;
+}
+
+.ucapan-item {
+  background: var(--clr-bg);
+  border-left: 3px solid var(--clr-gold);
+  border-radius: 0 0.5rem 0.5rem 0;
+  padding: 0.75rem 1rem;
+  animation: fadeUp 0.4s ease both;
+}
+.ucapan-item .ucapan-pengirim {
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--clr-gold);
+  letter-spacing: 0.05em;
+  margin-bottom: 0.2rem;
+}
+.ucapan-item .ucapan-teks {
+  font-size: 0.88rem;
+  color: var(--clr-body);
+}
+
+
+/* ────────────────────────────────────────────────────────────────
+   13. SHARE
+   ──────────────────────────────────────────────────────────────── */
+.share-btns {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.btn-wa {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  width: 100%;
+  max-width: 280px;
+  padding: 0.85rem 1.5rem;
+  background: var(--clr-wa);
+  color: #fff;
+  border-radius: 2rem;
+  font-size: 0.88rem;
+  font-weight: 500;
+  transition: background 0.25s, transform 0.2s;
+}
+.btn-wa:hover { background: #1da551; transform: translateY(-2px); }
+
+.btn-copy {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  max-width: 280px;
+  padding: 0.85rem 1.5rem;
+  border: 1.5px solid var(--clr-gold-lt);
+  border-radius: 2rem;
+  color: var(--clr-body);
+  font-size: 0.88rem;
+  font-weight: 400;
+  transition: border-color 0.25s, background 0.25s, color 0.25s;
+}
+.btn-copy:hover { border-color: var(--clr-gold); color: var(--clr-gold); }
+.btn-copy.copied { background: var(--clr-gold); color: #fff; border-color: var(--clr-gold); }
+
+
+/* ────────────────────────────────────────────────────────────────
+   14. FOOTER
+   ──────────────────────────────────────────────────────────────── */
+.footer {
+  padding: 2rem 1.6rem 3rem;
+  text-align: center;
+  background: var(--clr-dark);
+  color: rgba(255,255,255,0.45);
+  font-size: 0.78rem;
+  letter-spacing: 0.04em;
+}
+.footer-names {
+  font-family: var(--ff-display);
+  font-size: 1.4rem;
+  font-weight: 300;
+  color: var(--clr-gold-lt);
+  margin: 0.2rem 0;
+}
+.footer-tahun { color: rgba(255,255,255,0.25); }
+
+
+/* ────────────────────────────────────────────────────────────────
+   15. ANIMASI & KEYFRAMES
+   ──────────────────────────────────────────────────────────────── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeOut {
+  from { opacity: 1; pointer-events: all; }
+  to   { opacity: 0; pointer-events: none; }
+}

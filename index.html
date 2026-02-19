@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- ============================================================
+       JUDUL TAB BROWSER — ganti sesuai nama mempelai
+       ============================================================ -->
+  <title>Undangan Pernikahan | Raka & Dinda</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Jost:wght@300;400;500&display=swap" rel="stylesheet" />
+
+  <!-- File CSS Terpisah -->
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- ============================================================
+       COVER OVERLAY — layar pembuka sebelum undangan dibuka
+       ============================================================ -->
+  <div id="cover-overlay" class="cover-overlay">
+    <div class="cover-bg"></div>
+    <div class="cover-content">
+      <p class="cover-label">Undangan Pernikahan</p>
+      <h1 class="cover-names">Raka <span>&</span> Dinda</h1>
+      <p class="cover-quote">"Dan di antara tanda-tanda kekuasaan-Nya ialah Dia menciptakan untukmu pasangan hidup"</p>
+      <button id="btn-buka" class="btn-buka" onclick="bukaUndangan()">
+        <span>Buka Undangan</span>
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      </button>
+    </div>
+    <!-- Dekorasi bunga sudut -->
+    <div class="cover-deco top-left"></div>
+    <div class="cover-deco bottom-right"></div>
+  </div>
+
+  <!-- ============================================================
+       KONTROL MUSIK — tombol play/pause musik latar
+       ============================================================ -->
+  <button id="btn-musik" class="btn-musik hidden" onclick="toggleMusik()" title="Musik Latar">
+    <svg id="icon-play" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M9 18V6l12 6-12 6z"/></svg>
+    <svg id="icon-pause" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" class="hidden"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+  </button>
+
+  <!-- Audio musik latar -->
+  <audio id="audio-musik" loop>
+    <!-- ============================================================
+         GANTI SRC dengan link audio MP3 Anda
+         ============================================================ -->
+    <source src="https://www.bensound.com/bensound-music/bensound-romantic.mp3" type="audio/mpeg" />
+  </audio>
+
+  <!-- ============================================================
+       KONTEN UTAMA — muncul setelah tombol "Buka Undangan" diklik
+       ============================================================ -->
+  <main id="main-content" class="main-content hidden">
+
+    <!-- ── HERO ────────────────────────────────────────────────── -->
+    <section class="section hero fade-in-up">
+      <div class="hero-img-wrap">
+        <!-- ============================================================
+             GANTI URL di bawah dengan foto mempelai Anda
+             ============================================================ -->
+        <img
+          src="https://images.unsplash.com/photo-1519741497674-611481863552?w=800&q=80"
+          alt="Foto Mempelai"
+          class="hero-img"
+        />
+        <div class="hero-img-overlay"></div>
+      </div>
+      <div class="hero-text">
+        <p class="section-label">Bismillahirrahmanirrahim</p>
+        <h2 class="mempelai-names">
+          <span id="nama-pria">Muhammad Raka Pratama</span>
+          <em>&</em>
+          <span id="nama-wanita">Adinda Sari Dewi</span>
+        </h2>
+        <p class="hero-sub">Dengan penuh rasa syukur kami mengundang kehadiran Bapak/Ibu/Saudara/i pada hari pernikahan kami.</p>
+      </div>
+    </section>
+
+    <!-- Pembatas dekoratif -->
+    <div class="divider"><span>✦</span></div>
+
+    <!-- ── TANGGAL & WAKTU ─────────────────────────────────────── -->
+    <section class="section acara fade-in-up">
+      <p class="section-label">Waktu Pelaksanaan</p>
+      <h3 class="section-title">Detail Acara</h3>
+
+      <div class="acara-grid">
+        <div class="acara-card">
+          <p class="acara-ikon">🤝</p>
+          <h4>Akad Nikah</h4>
+          <p id="tanggal-akad">Sabtu, 12 Juli 2025</p>
+          <p id="jam-akad">08.00 – 10.00 WIB</p>
+        </div>
+        <div class="acara-card">
+          <p class="acara-ikon">🎊</p>
+          <h4>Resepsi</h4>
+          <p id="tanggal-resepsi">Sabtu, 12 Juli 2025</p>
+          <p id="jam-resepsi">11.00 – 14.00 WIB</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── COUNTDOWN ───────────────────────────────────────────── -->
+    <section class="section countdown-section fade-in-up">
+      <p class="section-label">Menghitung Hari</p>
+      <div class="countdown-wrap">
+        <div class="countdown-item"><span id="cd-hari">00</span><label>Hari</label></div>
+        <div class="countdown-sep">:</div>
+        <div class="countdown-item"><span id="cd-jam">00</span><label>Jam</label></div>
+        <div class="countdown-sep">:</div>
+        <div class="countdown-item"><span id="cd-menit">00</span><label>Menit</label></div>
+        <div class="countdown-sep">:</div>
+        <div class="countdown-item"><span id="cd-detik">00</span><label>Detik</label></div>
+      </div>
+    </section>
+
+    <!-- Pembatas dekoratif -->
+    <div class="divider"><span>✦</span></div>
+
+    <!-- ── GALERI FOTO ──────────────────────────────────────────── -->
+    <section class="section galeri fade-in-up">
+      <p class="section-label">Momen Kami</p>
+      <h3 class="section-title">Galeri</h3>
+      <div class="galeri-grid">
+        <!-- ============================================================
+             GANTI URL gambar berikut dengan foto-foto Anda
+             ============================================================ -->
+        <img src="https://images.unsplash.com/photo-1606216794074-735e91aa2c92?w=400&q=80" alt="Foto 1" class="galeri-img" />
+        <img src="https://images.unsplash.com/photo-1591604466107-ec97de577aff?w=400&q=80" alt="Foto 2" class="galeri-img" />
+        <img src="https://images.unsplash.com/photo-1537633552985-df8429e8048b?w=400&q=80" alt="Foto 3" class="galeri-img" />
+        <img src="https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=400&q=80" alt="Foto 4" class="galeri-img" />
+      </div>
+    </section>
+
+    <!-- ── LOKASI ──────────────────────────────────────────────── -->
+    <section class="section lokasi fade-in-up">
+      <p class="section-label">Lokasi Acara</p>
+      <h3 class="section-title" id="nama-lokasi">Gedung Serbaguna Bumi Asri</h3>
+      <p class="lokasi-alamat" id="alamat-lokasi">Jl. Mawar No. 45, Kota Bandung, Jawa Barat 40123</p>
+
+      <!-- ============================================================
+           GANTI src iframe di bawah dengan embed Google Maps Anda:
+           Buka maps.google.com → Pilih lokasi → Share → Embed a map → Salin src-nya
+           ============================================================ -->
+      <div class="maps-wrap">
+        <iframe
+          id="maps-iframe"
+          src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d126748.3185828205!2d107.5306688!3d-6.9174963!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x2e68e9aed63d4e37%3A0x6207d82b0c19a1a3!2sBandung%2C%20Kota%20Bandung%2C%20Jawa%20Barat!5e0!3m2!1sid!2sid!4v1717000000000!5m2!1sid!2sid"
+          allowfullscreen=""
+          loading="lazy"
+          referrerpolicy="no-referrer-when-downgrade"
+          title="Lokasi Acara"
+        ></iframe>
+      </div>
+
+      <a id="btn-maps" href="#" target="_blank" rel="noopener" class="btn-outline btn-maps-link">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        Buka di Google Maps
+      </a>
+    </section>
+
+    <!-- Pembatas dekoratif -->
+    <div class="divider"><span>✦</span></div>
+
+    <!-- ── UCAPAN / RSVP ────────────────────────────────────────── -->
+    <section class="section ucapan fade-in-up">
+      <p class="section-label">Sampaikan Ucapan</p>
+      <h3 class="section-title">Doa & Ucapan</h3>
+      <div class="ucapan-input-wrap">
+        <input type="text" id="input-nama" placeholder="Nama Anda" class="ucapan-input" />
+        <textarea id="input-pesan" placeholder="Tulis doa atau ucapan..." class="ucapan-textarea" rows="3"></textarea>
+        <button class="btn-primary" onclick="kirimUcapan()">Kirim Ucapan</button>
+      </div>
+      <div id="ucapan-list" class="ucapan-list"></div>
+    </section>
+
+    <!-- ── SHARE ───────────────────────────────────────────────── -->
+    <section class="section share fade-in-up">
+      <p class="section-label">Bagikan Undangan</p>
+      <h3 class="section-title">Sebarkan Kebahagiaan</h3>
+      <div class="share-btns">
+        <button class="btn-wa" onclick="bagikanWA()">
+          <!-- Ikon WhatsApp SVG -->
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413z"/></svg>
+          Bagikan ke WhatsApp
+        </button>
+        <button class="btn-copy" onclick="salinLink()">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          <span id="copy-text">Salin Link</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- ── FOOTER ──────────────────────────────────────────────── -->
+    <footer class="footer">
+      <p>Dibuat dengan ❤️ untuk</p>
+      <p class="footer-names" id="footer-names">Raka & Dinda</p>
+      <p class="footer-tahun" id="footer-tahun">2025</p>
+    </footer>
+
+  </main><!-- /main-content -->
+
+  <!-- File JavaScript Terpisah -->
+  <script src="script.js"></script>
+</body>
+</html>
