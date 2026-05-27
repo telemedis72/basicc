@@ -1,213 +1,423 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>LeafletMap PRO — GPS + Firebase</title>
 
-  <!-- ============================================================
-       JUDUL TAB BROWSER — ganti sesuai nama mempelai
-       ============================================================ -->
-  <title>Undangan Pernikahan | Raka & Dinda</title>
-
-  <!-- Google Fonts -->
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Jost:wght@300;400;500&display=swap" rel="stylesheet" />
-
-  <!-- File CSS Terpisah -->
-  <link rel="stylesheet" href="style.css" />
+<!-- ═══ LEAFLET CORE ═══ -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+<!-- ═══ PLUGINS CSS ═══ -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet-routing-machine/3.2.12/leaflet-routing-machine.min.css"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css"/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css"/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.css"/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.Default.css"/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet-minimap/dist/Control.MiniMap.min.css"/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet-measure/dist/leaflet-measure.css"/>
+<!-- ═══ FONTS ═══ -->
+<link href="https://fonts.googleapis.com/css2?family=Oxanium:wght@400;600;700;800&family=Fira+Code:wght@400;500;600&family=Nunito:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<!-- ═══ CSS KITA ═══ -->
+<link rel="stylesheet" href="style.css"/>
 </head>
 <body>
 
-  <!-- ============================================================
-       COVER OVERLAY — layar pembuka sebelum undangan dibuka
-       ============================================================ -->
-  <div id="cover-overlay" class="cover-overlay">
-    <div class="cover-bg"></div>
-    <div class="cover-content">
-      <p class="cover-label">Undangan Pernikahan</p>
-      <h1 class="cover-names">Raka <span>&</span> Dinda</h1>
-      <p class="cover-quote">"Dan di antara tanda-tanda kekuasaan-Nya ialah Dia menciptakan untukmu pasangan hidup"</p>
-      <button id="btn-buka" class="btn-buka" onclick="bukaUndangan()">
-        <span>Buka Undangan</span>
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-      </button>
+<!-- ╔══════════════ HEADER ══════════════╗ -->
+<div id="hd">
+  <div class="brand">LeafletMap <span>PRO</span></div>
+  <div class="hpills">
+    <div class="hp" id="hGPS"><div class="d"></div>GPS Saya</div>
+    <div class="hp" id="hFB"><div class="d"></div>Firebase</div>
+    <div class="hp" id="hRt"><div class="d"></div>Routing</div>
+    <div class="hp" id="hDr"><div class="d"></div>Draw</div>
+    <div class="hp" id="hCl"><div class="d"></div>Cluster</div>
+    <div class="hp" id="hHt"><div class="d"></div>Heatmap</div>
+    <div class="hp" id="hGj"><div class="d"></div>GeoJSON</div>
+    <div class="hp" id="hMs"><div class="d"></div>Measure</div>
+    <div class="hp" id="hWt"><div class="d"></div>Watch</div>
+  </div>
+</div>
+
+<!-- ╔══════════════ APP ══════════════╗ -->
+<div id="app">
+
+  <!-- ╔═══ SIDEBAR ═══╗ -->
+  <div id="sb">
+    <div class="tabs">
+      <button class="tab on"  onclick="T('gps')">📡 GPS</button>
+      <button class="tab"     onclick="T('fb')">🔥 Firebase</button>
+      <button class="tab"     onclick="T('dest')">📍 Tujuan</button>
+      <button class="tab"     onclick="T('layers')">🗂 Layers</button>
+      <button class="tab"     onclick="T('shapes')">✏️ Shapes</button>
+      <button class="tab"     onclick="T('tools')">🛠 Tools</button>
+      <button class="tab"     onclick="T('events')">📊 Events</button>
     </div>
-    <!-- Dekorasi bunga sudut -->
-    <div class="cover-deco top-left"></div>
-    <div class="cover-deco bottom-right"></div>
+
+    <!-- ════════════ TAB: GPS SAYA ════════════ -->
+    <div class="pnl on" id="pnl-gps">
+      <div class="sec">
+        <div class="sec-t">Lokasi Saya — GPS HP / Laptop</div>
+        <div class="sg">
+          <div class="st f"><div class="sl">Koordinat GPS</div><div class="sv" id="gCoord">Belum dideteksi</div></div>
+          <div class="st"><div class="sl">Akurasi</div><div class="sv am" id="gAcc">—</div></div>
+          <div class="st"><div class="sl">Kecepatan</div><div class="sv gr" id="gSpd">—</div></div>
+          <div class="st"><div class="sl">Heading</div><div class="sv wh" id="gHdg">—</div></div>
+          <div class="st"><div class="sl">Altitude</div><div class="sv wh" id="gAlt">—</div></div>
+          <div class="st"><div class="sl">Terakhir Update</div><div class="sv wh" id="gUpd">—</div></div>
+        </div>
+        <button class="btn b-cy" id="btnGPS" onclick="deteksiGPS()">📡 Deteksi GPS Saya</button>
+        <div class="g2" style="margin-top:5px">
+          <button class="btn b-gh" id="btnWatch" onclick="toggleWatch()">👁 Watch Realtime</button>
+          <button class="btn b-gh" onclick="kePosSaya()">🎯 Ke Posisi Saya</button>
+        </div>
+      </div>
+      <div class="sec">
+        <div class="sec-t">Jejak Perjalanan GPS</div>
+        <div class="sg" style="margin-bottom:8px">
+          <div class="st"><div class="sl">Titik Jejak</div><div class="sv" id="trPt">0</div></div>
+          <div class="st"><div class="sl">Total Jarak</div><div class="sv gr" id="trKm">0 m</div></div>
+        </div>
+        <div class="g2">
+          <button class="btn b-gh" onclick="hapusJejak()">🗑 Hapus Jejak</button>
+          <button class="btn b-gh" onclick="fitJejak()">⊡ Fit Jejak</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════════════ TAB: FIREBASE ════════════ -->
+    <div class="pnl" id="pnl-fb">
+      <div class="sec">
+        <div class="sec-t">Konfigurasi Firebase</div>
+        <div class="fl"><label>API Key</label><input class="inp" id="fbKey" placeholder="AIzaSy..."/></div>
+        <div class="fl"><label>Auth Domain</label><input class="inp" id="fbAuth" placeholder="project.firebaseapp.com"/></div>
+        <div class="fl"><label>Project ID</label><input class="inp" id="fbPid" placeholder="nama-project-firebase"/></div>
+        <div class="fl"><label>App ID</label><input class="inp" id="fbApp" placeholder="1:000:web:abc123"/></div>
+        <div class="fl"><label>Nama Collection</label><input class="inp" id="fbCol" value="tujuan"/></div>
+        <button class="btn b-cy" onclick="hubungFB()">🔥 Hubungkan Firebase</button>
+        <button class="btn b-gh" onclick="loadDemo()">🗺 Gunakan Data Demo</button>
+      </div>
+      <div class="sec">
+        <div class="sec-t">Status Koneksi</div>
+        <div class="sg">
+          <div class="st f"><div class="sl">Status</div><div class="sv" id="fbStat" style="color:var(--mt)">Belum terhubung</div></div>
+          <div class="st"><div class="sl">Collection</div><div class="sv" id="fbColD">—</div></div>
+          <div class="st"><div class="sl">Jumlah Tujuan</div><div class="sv gr" id="fbJml">0</div></div>
+        </div>
+      </div>
+      <div class="sec">
+        <div class="sec-t">Format Dokumen Firestore</div>
+        <p style="font-size:.68rem;color:var(--mt);margin-bottom:8px;line-height:1.6">
+          Dokumen dari ESP32 atau input manual harus memiliki field:
+        </p>
+        <div class="codeblk">
+          <span class="ck">{</span><br>
+          &nbsp;&nbsp;<span class="ck">"nama"</span>: <span class="cv">"Nama Tempat"</span>,<br>
+          &nbsp;&nbsp;<span class="ck">"kategori"</span>: <span class="cv">"Wisata"</span>,<br>
+          &nbsp;&nbsp;<span class="ck">"deskripsi"</span>: <span class="cv">"Keterangan"</span>,<br>
+          &nbsp;&nbsp;<span class="ck">"lat"</span>: <span class="cn">-6.2088</span>,<br>
+          &nbsp;&nbsp;<span class="ck">"lng"</span>: <span class="cn">106.8456</span><br>
+          <span class="ck">}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════════════ TAB: TUJUAN ════════════ -->
+    <div class="pnl" id="pnl-dest">
+      <div id="rcard">
+        <div class="rc-lbl">🧭 Navigasi Aktif</div>
+        <div class="rc-nm" id="rcNm">—</div>
+        <div class="rc-row">
+          <div class="rc-cell"><div class="rl">Jarak</div><div class="rv" id="rcKm">—</div></div>
+          <div class="rc-cell"><div class="rl">Waktu</div><div class="rv" id="rcEta">—</div></div>
+          <div class="rc-cell"><div class="rl">Tiba</div><div class="rv" id="rcTiba" style="font-size:.72rem">—</div></div>
+        </div>
+        <button class="btn b-rd" onclick="hapusRute()" style="font-size:.65rem;padding:6px">✕ Hentikan Navigasi</button>
+      </div>
+      <div class="sec" style="padding-bottom:7px">
+        <div class="sec-t">
+          Tujuan dari Firebase
+          <span id="jmlBdg" style="margin-left:4px;background:var(--ln2);border-radius:10px;padding:1px 7px;font-size:.55rem;color:var(--c1)">0</span>
+        </div>
+        <div class="g3">
+          <button class="btn b-gh" style="margin-bottom:0" onclick="fitSemuaTujuan()">⊡ Fit</button>
+          <button class="btn b-gh" style="margin-bottom:0" onclick="hapusRute()">✕ Rute</button>
+          <button class="btn b-gh" style="margin-bottom:0" onclick="T('tools')">＋ Tambah</button>
+        </div>
+      </div>
+      <div id="daftarDest" style="flex:1">
+        <div class="empty"><div class="ei">🔥</div><p>Hubungkan Firebase<br>di tab Firebase</p></div>
+      </div>
+    </div>
+
+    <!-- ════════════ TAB: LAYERS ════════════ -->
+    <div class="pnl" id="pnl-layers">
+      <div class="sec">
+        <div class="sec-t">Base Tile Layer</div>
+        <div class="g2">
+          <button class="btn b-gh" onclick="setTile('dark')">🌑 Dark</button>
+          <button class="btn b-gh" onclick="setTile('light')">☀️ Light</button>
+          <button class="btn b-gh" onclick="setTile('satellite')">🛰 Satelit</button>
+          <button class="btn b-gh" onclick="setTile('osm')">🗺 OSM</button>
+          <button class="btn b-gh" onclick="setTile('topo')">⛰ Topo</button>
+          <button class="btn b-gh" onclick="setTile('watercolor')">🎨 Watercolor</button>
+          <button class="btn b-gh" onclick="setTile('transport')">🚌 Transport</button>
+          <button class="btn b-gh" onclick="setTile('cycle')">🚴 Cycling</button>
+        </div>
+      </div>
+      <div class="sec">
+        <div class="sec-t">Opacity Tile</div>
+        <div class="fl">
+          <label>Opacity: <span id="opVal">1.0</span></label>
+          <input type="range" min=".1" max="1" step=".05" value="1" oninput="setTileOp(this.value)"/>
+        </div>
+      </div>
+      <div class="sec">
+        <div class="sec-t">Overlay Layers</div>
+        <div class="tog-row"><span>🔥 Heatmap Tujuan</span><label class="tog"><input type="checkbox" id="tHeat" onchange="toggleHeatmap(this.checked)"/><div class="tsl"></div></label></div>
+        <div class="tog-row"><span>📍 Marker Cluster</span><label class="tog"><input type="checkbox" id="tCluster" onchange="toggleCluster(this.checked)"/><div class="tsl"></div></label></div>
+        <div class="tog-row"><span>🌐 GeoJSON Wilayah</span><label class="tog"><input type="checkbox" id="tGeo" onchange="toggleGeoJSON(this.checked)"/><div class="tsl"></div></label></div>
+        <div class="tog-row"><span>📏 Scale Bar</span><label class="tog"><input type="checkbox" id="tScale" checked onchange="toggleScale(this.checked)"/><div class="tsl"></div></label></div>
+        <div class="tog-row"><span>🗺 Minimap</span><label class="tog"><input type="checkbox" id="tMini" onchange="toggleMinimap(this.checked)"/><div class="tsl"></div></label></div>
+        <div class="tog-row"><span>📐 Grid Koordinat</span><label class="tog"><input type="checkbox" id="tGrid" onchange="toggleGrid(this.checked)"/><div class="tsl"></div></label></div>
+        <div class="tog-row"><span>🖼 Image Overlay</span><label class="tog"><input type="checkbox" id="tImg" onchange="toggleImageOverlay(this.checked)"/><div class="tsl"></div></label></div>
+      </div>
+      <div class="sec">
+        <div class="sec-t">Layer Control Panel</div>
+        <button class="btn b-gh" onclick="addLayerControl()">⊞ Tambah Layer Control</button>
+        <button class="btn b-gh" onclick="removeLayerControl()">✕ Hapus Layer Control</button>
+      </div>
+    </div>
+
+    <!-- ════════════ TAB: SHAPES ════════════ -->
+    <div class="pnl" id="pnl-shapes">
+      <div class="sec">
+        <div class="sec-t">Marker</div>
+        <div class="fl"><label>Label</label><input class="inp" id="mLbl" placeholder="Nama marker"/></div>
+        <div class="fl"><label>Ikon</label>
+          <select class="inp" id="mIkon">
+            <option>📍</option><option>⭐</option><option>🏠</option><option>🏢</option>
+            <option>🍔</option><option>🏥</option><option>⛽</option><option>🎭</option>
+            <option>📚</option><option>🕌</option><option>🚩</option><option>💎</option>
+          </select>
+        </div>
+        <div class="fl"><label>Warna</label>
+          <div class="swatches" id="swM">
+            <div class="sw on" style="background:#00e5ff" data-c="#00e5ff" onclick="pilihWarna(this,'m')"></div>
+            <div class="sw" style="background:#ff6b35" data-c="#ff6b35" onclick="pilihWarna(this,'m')"></div>
+            <div class="sw" style="background:#39ff88" data-c="#39ff88" onclick="pilihWarna(this,'m')"></div>
+            <div class="sw" style="background:#c084fc" data-c="#c084fc" onclick="pilihWarna(this,'m')"></div>
+            <div class="sw" style="background:#fbbf24" data-c="#fbbf24" onclick="pilihWarna(this,'m')"></div>
+            <div class="sw" style="background:#f43f5e" data-c="#f43f5e" onclick="pilihWarna(this,'m')"></div>
+          </div>
+        </div>
+        <div class="g2">
+          <button class="btn b-cy" onclick="tambahMarkerCenter()">📍 Di Center</button>
+          <button class="btn b-gh" onclick="modePilih('marker')">🖱 Klik Peta</button>
+        </div>
+      </div>
+      <div class="sec">
+        <div class="sec-t">Circle &amp; CircleMarker</div>
+        <div class="fl"><label>Radius (meter)</label><input class="inp" id="circR" type="number" value="500" min="1"/></div>
+        <div class="fl"><label>Warna</label>
+          <div class="swatches" id="swC">
+            <div class="sw on" style="background:#00e5ff" data-c="#00e5ff" onclick="pilihWarna(this,'c')"></div>
+            <div class="sw" style="background:#ff6b35" data-c="#ff6b35" onclick="pilihWarna(this,'c')"></div>
+            <div class="sw" style="background:#39ff88" data-c="#39ff88" onclick="pilihWarna(this,'c')"></div>
+            <div class="sw" style="background:#c084fc" data-c="#c084fc" onclick="pilihWarna(this,'c')"></div>
+            <div class="sw" style="background:#fbbf24" data-c="#fbbf24" onclick="pilihWarna(this,'c')"></div>
+          </div>
+        </div>
+        <div class="g3">
+          <button class="btn b-or" onclick="tambahCircle()">⭕ Circle</button>
+          <button class="btn b-gh" onclick="tambahCircleMarker()">• CMarker</button>
+          <button class="btn b-gh" onclick="modePilih('circle')">🖱 Klik</button>
+        </div>
+      </div>
+      <div class="sec">
+        <div class="sec-t">Polygon · Polyline · Rectangle</div>
+        <div class="fl"><label>Warna</label>
+          <div class="swatches" id="swP">
+            <div class="sw on" style="background:#39ff88" data-c="#39ff88" onclick="pilihWarna(this,'p')"></div>
+            <div class="sw" style="background:#00e5ff" data-c="#00e5ff" onclick="pilihWarna(this,'p')"></div>
+            <div class="sw" style="background:#ff6b35" data-c="#ff6b35" onclick="pilihWarna(this,'p')"></div>
+            <div class="sw" style="background:#c084fc" data-c="#c084fc" onclick="pilihWarna(this,'p')"></div>
+            <div class="sw" style="background:#fbbf24" data-c="#fbbf24" onclick="pilihWarna(this,'p')"></div>
+          </div>
+        </div>
+        <div class="g3">
+          <button class="btn b-gr" onclick="tambahPolyline()">〰 Line</button>
+          <button class="btn b-gr" onclick="tambahPolygon()">⬡ Polygon</button>
+          <button class="btn b-gh" onclick="tambahRect()">▭ Rect</button>
+        </div>
+      </div>
+      <div class="sec">
+        <div class="sec-t">Kelola Shapes</div>
+        <div class="g2">
+          <button class="btn b-rd" onclick="hapusSemuaShape()">🗑 Hapus Semua</button>
+          <button class="btn b-gh" onclick="fitSemuaShape()">⊡ Fit Semua</button>
+        </div>
+        <div id="shapeList" style="margin-top:8px"></div>
+      </div>
+    </div>
+
+    <!-- ════════════ TAB: TOOLS ════════════ -->
+    <div class="pnl" id="pnl-tools">
+      <div class="sec">
+        <div class="sec-t">Routing — GPS Saya → Tujuan Firebase</div>
+        <div class="fl"><label>Pilih Tujuan</label>
+          <select class="inp" id="rtTo"><option value="">-- Pilih tujuan --</option></select>
+        </div>
+        <div class="fl"><label>Profil Rute</label>
+          <select class="inp" id="rtProf">
+            <option value="driving">🚗 Berkendara</option>
+            <option value="cycling">🚴 Bersepeda</option>
+            <option value="walking">🚶 Jalan kaki</option>
+          </select>
+        </div>
+        <button class="btn b-am" onclick="mulaiRute()">🧭 Mulai Navigasi</button>
+        <button class="btn b-rd" onclick="hapusRute()">✕ Hapus Rute</button>
+      </div>
+      <div class="sec">
+        <div class="sec-t">Draw Tools</div>
+        <div class="g3">
+          <button class="btn b-gh" onclick="draw('polyline')">〰 Line</button>
+          <button class="btn b-gh" onclick="draw('polygon')">⬡ Poly</button>
+          <button class="btn b-gh" onclick="draw('rectangle')">▭ Rect</button>
+          <button class="btn b-gh" onclick="draw('circle')">⭕ Circle</button>
+          <button class="btn b-gh" onclick="draw('marker')">📍 Mrk</button>
+          <button class="btn b-rd" onclick="draw('delete')">🗑 Del</button>
+        </div>
+      </div>
+      <div class="sec">
+        <div class="sec-t">Ukur Jarak &amp; Area</div>
+        <button class="btn b-pu" onclick="toast('Klik toolbar 📏 di kiri peta untuk mulai ukur','info')">📏 Info Pengukuran</button>
+      </div>
+      <div class="sec">
+        <div class="sec-t">Animasi Peta</div>
+        <div class="fl"><label>flyTo / panTo (lat,lng,zoom)</label>
+          <input class="inp" id="flyInp" placeholder="-6.2088,106.8456,13"/>
+        </div>
+        <div class="g2">
+          <button class="btn b-cy" onclick="doFlyTo()">✈ flyTo</button>
+          <button class="btn b-gh" onclick="doPanTo()">↔ panTo</button>
+        </div>
+        <div class="g3" style="margin-top:5px">
+          <button class="btn b-gh" onclick="doBounce()">↕ Bounce</button>
+          <button class="btn b-gh" onclick="doSpin()">🔄 Spin</button>
+          <button class="btn b-gh" onclick="doPathAnim()">▶ Path</button>
+        </div>
+        <button class="btn b-gh" style="margin-top:5px" onclick="resetView()">🏠 Reset View</button>
+      </div>
+      <div class="sec">
+        <div class="sec-t">Tambah Tujuan ke Firebase</div>
+        <div class="fl"><label>Nama</label><input class="inp" id="aNm" placeholder="Nama tempat"/></div>
+        <div class="fl"><label>Kategori</label>
+          <select class="inp" id="aKat">
+            <option>🏠 Rumah</option><option>🏢 Kantor</option><option>🍽 Restoran</option>
+            <option>🏥 Kesehatan</option><option>🎭 Wisata</option><option>🕌 Ibadah</option>
+            <option>🏫 Sekolah</option><option>⛽ SPBU</option><option>🛒 Belanja</option>
+            <option>📍 Lainnya</option>
+          </select>
+        </div>
+        <div class="r2">
+          <div class="fl"><label>Lat</label><input class="inp" id="aLat" type="number" step="any" placeholder="-6.2"/></div>
+          <div class="fl"><label>Lng</label><input class="inp" id="aLng" type="number" step="any" placeholder="106.8"/></div>
+        </div>
+        <div class="g2" style="margin-bottom:6px">
+          <button class="btn b-gh" style="margin-bottom:0" onclick="isiDariGPS()">📍 Dari GPS Saya</button>
+          <button class="btn b-gh" style="margin-bottom:0" onclick="modePilih('dest')">🖱 Klik Peta</button>
+        </div>
+        <button class="btn b-am" onclick="simpanTujuan()">💾 Simpan ke Firebase</button>
+      </div>
+      <div class="sec">
+        <div class="sec-t">Export</div>
+        <div class="g2">
+          <button class="btn b-gh" onclick="exportGeoJSON()">📁 GeoJSON</button>
+          <button class="btn b-gh" onclick="salinKoord()">📋 Salin Koordinat</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════════════ TAB: EVENTS ════════════ -->
+    <div class="pnl" id="pnl-events">
+      <div class="sec">
+        <div class="sec-t">Mouse &amp; Koordinat</div>
+        <div class="sg">
+          <div class="st f"><div class="sl">Lat, Lng</div><div class="sv" id="evLL">Gerakkan mouse di peta</div></div>
+          <div class="st f"><div class="sl">Pixel X, Y</div><div class="sv" id="evPx">—</div></div>
+        </div>
+      </div>
+      <div class="sec">
+        <div class="sec-t">Status Peta</div>
+        <div class="sg">
+          <div class="st f"><div class="sl">Center</div><div class="sv" id="evCtr">—</div></div>
+          <div class="st"><div class="sl">Zoom</div><div class="sv" id="evZm">—</div></div>
+          <div class="st"><div class="sl">Size (px)</div><div class="sv" id="evSz">—</div></div>
+          <div class="st f"><div class="sl">Bounds</div><div class="sv" id="evBd" style="font-size:.6rem">—</div></div>
+        </div>
+      </div>
+      <div class="sec">
+        <div class="sec-t">Event Log</div>
+        <div class="g2" style="margin-bottom:7px">
+          <button class="btn b-gh" style="margin-bottom:0" onclick="document.getElementById('evlog').innerHTML=''">🗑 Clear</button>
+          <button class="btn b-gh" style="margin-bottom:0" id="btnEvPause" onclick="toggleEvPause()">⏸ Pause</button>
+        </div>
+        <div id="evlog"><div class="evl">Menunggu event peta...</div></div>
+      </div>
+      <div class="sec">
+        <div class="sec-t">Map Options</div>
+        <div class="tog-row"><span>Scroll Zoom</span>
+          <label class="tog"><input type="checkbox" checked onchange="this.checked?map.scrollWheelZoom.enable():map.scrollWheelZoom.disable()"/><div class="tsl"></div></label>
+        </div>
+        <div class="tog-row"><span>Double Click Zoom</span>
+          <label class="tog"><input type="checkbox" checked onchange="this.checked?map.doubleClickZoom.enable():map.doubleClickZoom.disable()"/><div class="tsl"></div></label>
+        </div>
+        <div class="tog-row"><span>Dragging</span>
+          <label class="tog"><input type="checkbox" checked onchange="this.checked?map.dragging.enable():map.dragging.disable()"/><div class="tsl"></div></label>
+        </div>
+        <div class="tog-row"><span>Keyboard Nav</span>
+          <label class="tog"><input type="checkbox" checked onchange="this.checked?map.keyboard.enable():map.keyboard.disable()"/><div class="tsl"></div></label>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /sidebar -->
+
+  <!-- ╔═══ MAP ═══╗ -->
+  <div id="map">
+    <div id="mov">
+      <div class="ov" id="ovSaya" style="display:none">
+        <div class="ovl">📍 GPS Saya</div>
+        <div class="ovv" id="ovSayaV">—</div>
+        <div class="ovv" style="color:var(--mt);font-size:.6rem" id="ovSayaS">—</div>
+      </div>
+      <div class="ov" id="ovRute" style="display:none">
+        <div class="ovl">🧭 Navigasi</div>
+        <div class="ovv am" id="ovRuteNm">—</div>
+        <div class="ovv gr" style="font-size:.68rem" id="ovRuteInfo">—</div>
+      </div>
+      <div class="ov" id="ovMeasure" style="display:none">
+        <div class="ovl">📏 Pengukuran</div>
+        <div class="ovv" id="ovMeasureV">Aktif</div>
+      </div>
+    </div>
   </div>
 
-  <!-- ============================================================
-       KONTROL MUSIK — tombol play/pause musik latar
-       ============================================================ -->
-  <button id="btn-musik" class="btn-musik hidden" onclick="toggleMusik()" title="Musik Latar">
-    <svg id="icon-play" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M9 18V6l12 6-12 6z"/></svg>
-    <svg id="icon-pause" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" class="hidden"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
-  </button>
+</div><!-- /app -->
+<div id="toast"></div>
 
-  <!-- Audio musik latar -->
-  <audio id="audio-musik" loop>
-    <!-- ============================================================
-         GANTI SRC dengan link audio MP3 Anda
-         ============================================================ -->
-    <source src="https://www.bensound.com/bensound-music/bensound-romantic.mp3" type="audio/mpeg" />
-  </audio>
+<!-- ═══════════════ LEAFLET SCRIPTS ═══════════════ -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-routing-machine/3.2.12/leaflet-routing-machine.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
+<script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
+<script src="https://unpkg.com/leaflet.markercluster/dist/leaflet.markercluster.js"></script>
+<script src="https://unpkg.com/leaflet-minimap/dist/Control.MiniMap.min.js"></script>
+<script src="https://unpkg.com/leaflet.heat/dist/leaflet-heat.js"></script>
+<script src="https://unpkg.com/leaflet-measure/dist/leaflet-measure.js"></script>
 
-  <!-- ============================================================
-       KONTEN UTAMA — muncul setelah tombol "Buka Undangan" diklik
-       ============================================================ -->
-  <main id="main-content" class="main-content hidden">
+<!-- ═══════════════ APP SCRIPT ═══════════════ -->
+<script type="module" src="app.js"></script>
 
-    <!-- ── HERO ────────────────────────────────────────────────── -->
-    <section class="section hero fade-in-up">
-      <div class="hero-img-wrap">
-        <!-- ============================================================
-             GANTI URL di bawah dengan foto mempelai Anda
-             ============================================================ -->
-        <img
-          src="https://images.unsplash.com/photo-1519741497674-611481863552?w=800&q=80"
-          alt="Foto Mempelai"
-          class="hero-img"
-        />
-        <div class="hero-img-overlay"></div>
-      </div>
-      <div class="hero-text">
-        <p class="section-label">Bismillahirrahmanirrahim</p>
-        <h2 class="mempelai-names">
-          <span id="nama-pria">Muhammad Raka Pratama</span>
-          <em>&</em>
-          <span id="nama-wanita">Adinda Sari Dewi</span>
-        </h2>
-        <p class="hero-sub">Dengan penuh rasa syukur kami mengundang kehadiran Bapak/Ibu/Saudara/i pada hari pernikahan kami.</p>
-      </div>
-    </section>
-
-    <!-- Pembatas dekoratif -->
-    <div class="divider"><span>✦</span></div>
-
-    <!-- ── TANGGAL & WAKTU ─────────────────────────────────────── -->
-    <section class="section acara fade-in-up">
-      <p class="section-label">Waktu Pelaksanaan</p>
-      <h3 class="section-title">Detail Acara</h3>
-
-      <div class="acara-grid">
-        <div class="acara-card">
-          <p class="acara-ikon">🤝</p>
-          <h4>Akad Nikah</h4>
-          <p id="tanggal-akad">Sabtu, 12 Juli 2025</p>
-          <p id="jam-akad">08.00 – 10.00 WIB</p>
-        </div>
-        <div class="acara-card">
-          <p class="acara-ikon">🎊</p>
-          <h4>Resepsi</h4>
-          <p id="tanggal-resepsi">Sabtu, 12 Juli 2025</p>
-          <p id="jam-resepsi">11.00 – 14.00 WIB</p>
-        </div>
-      </div>
-    </section>
-
-    <!-- ── COUNTDOWN ───────────────────────────────────────────── -->
-    <section class="section countdown-section fade-in-up">
-      <p class="section-label">Menghitung Hari</p>
-      <div class="countdown-wrap">
-        <div class="countdown-item"><span id="cd-hari">00</span><label>Hari</label></div>
-        <div class="countdown-sep">:</div>
-        <div class="countdown-item"><span id="cd-jam">00</span><label>Jam</label></div>
-        <div class="countdown-sep">:</div>
-        <div class="countdown-item"><span id="cd-menit">00</span><label>Menit</label></div>
-        <div class="countdown-sep">:</div>
-        <div class="countdown-item"><span id="cd-detik">00</span><label>Detik</label></div>
-      </div>
-    </section>
-
-    <!-- Pembatas dekoratif -->
-    <div class="divider"><span>✦</span></div>
-
-    <!-- ── GALERI FOTO ──────────────────────────────────────────── -->
-    <section class="section galeri fade-in-up">
-      <p class="section-label">Momen Kami</p>
-      <h3 class="section-title">Galeri</h3>
-      <div class="galeri-grid">
-        <!-- ============================================================
-             GANTI URL gambar berikut dengan foto-foto Anda
-             ============================================================ -->
-        <img src="https://images.unsplash.com/photo-1606216794074-735e91aa2c92?w=400&q=80" alt="Foto 1" class="galeri-img" />
-        <img src="https://images.unsplash.com/photo-1591604466107-ec97de577aff?w=400&q=80" alt="Foto 2" class="galeri-img" />
-        <img src="https://images.unsplash.com/photo-1537633552985-df8429e8048b?w=400&q=80" alt="Foto 3" class="galeri-img" />
-        <img src="https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=400&q=80" alt="Foto 4" class="galeri-img" />
-      </div>
-    </section>
-
-    <!-- ── LOKASI ──────────────────────────────────────────────── -->
-    <section class="section lokasi fade-in-up">
-      <p class="section-label">Lokasi Acara</p>
-      <h3 class="section-title" id="nama-lokasi">Gedung Serbaguna Bumi Asri</h3>
-      <p class="lokasi-alamat" id="alamat-lokasi">Jl. Mawar No. 45, Kota Bandung, Jawa Barat 40123</p>
-
-      <!-- ============================================================
-           GANTI src iframe di bawah dengan embed Google Maps Anda:
-           Buka maps.google.com → Pilih lokasi → Share → Embed a map → Salin src-nya
-           ============================================================ -->
-      <div class="maps-wrap">
-        <iframe
-          id="maps-iframe"
-          src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d126748.3185828205!2d107.5306688!3d-6.9174963!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x2e68e9aed63d4e37%3A0x6207d82b0c19a1a3!2sBandung%2C%20Kota%20Bandung%2C%20Jawa%20Barat!5e0!3m2!1sid!2sid!4v1717000000000!5m2!1sid!2sid"
-          allowfullscreen=""
-          loading="lazy"
-          referrerpolicy="no-referrer-when-downgrade"
-          title="Lokasi Acara"
-        ></iframe>
-      </div>
-
-      <a id="btn-maps" href="#" target="_blank" rel="noopener" class="btn-outline btn-maps-link">
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-        Buka di Google Maps
-      </a>
-    </section>
-
-    <!-- Pembatas dekoratif -->
-    <div class="divider"><span>✦</span></div>
-
-    <!-- ── UCAPAN / RSVP ────────────────────────────────────────── -->
-    <section class="section ucapan fade-in-up">
-      <p class="section-label">Sampaikan Ucapan</p>
-      <h3 class="section-title">Doa & Ucapan</h3>
-      <div class="ucapan-input-wrap">
-        <input type="text" id="input-nama" placeholder="Nama Anda" class="ucapan-input" />
-        <textarea id="input-pesan" placeholder="Tulis doa atau ucapan..." class="ucapan-textarea" rows="3"></textarea>
-        <button class="btn-primary" onclick="kirimUcapan()">Kirim Ucapan</button>
-      </div>
-      <div id="ucapan-list" class="ucapan-list"></div>
-    </section>
-
-    <!-- ── SHARE ───────────────────────────────────────────────── -->
-    <section class="section share fade-in-up">
-      <p class="section-label">Bagikan Undangan</p>
-      <h3 class="section-title">Sebarkan Kebahagiaan</h3>
-      <div class="share-btns">
-        <button class="btn-wa" onclick="bagikanWA()">
-          <!-- Ikon WhatsApp SVG -->
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413z"/></svg>
-          Bagikan ke WhatsApp
-        </button>
-        <button class="btn-copy" onclick="salinLink()">
-          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-          <span id="copy-text">Salin Link</span>
-        </button>
-      </div>
-    </section>
-
-    <!-- ── FOOTER ──────────────────────────────────────────────── -->
-    <footer class="footer">
-      <p>Dibuat dengan ❤️ untuk</p>
-      <p class="footer-names" id="footer-names">Raka & Dinda</p>
-      <p class="footer-tahun" id="footer-tahun">2025</p>
-    </footer>
-
-  </main><!-- /main-content -->
-
-  <!-- File JavaScript Terpisah -->
-  <script src="script.js"></script>
 </body>
 </html>
