@@ -1,423 +1,832 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<title>LeafletMap PRO — GPS + Firebase</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
+<title>Domino Mandan — Scorekeeper</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #12161b;
+    --bg-raise: #191e25;
+    --card: #1d232b;
+    --card-2: #232a33;
+    --line: #2b333d;
+    --ink: #eef1f4;
+    --ink-dim: #97a2ad;
+    --ink-faint: #616d78;
 
-<!-- ═══ LEAFLET CORE ═══ -->
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
-<!-- ═══ PLUGINS CSS ═══ -->
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet-routing-machine/3.2.12/leaflet-routing-machine.min.css"/>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css"/>
-<link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css"/>
-<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.css"/>
-<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.Default.css"/>
-<link rel="stylesheet" href="https://unpkg.com/leaflet-minimap/dist/Control.MiniMap.min.css"/>
-<link rel="stylesheet" href="https://unpkg.com/leaflet-measure/dist/leaflet-measure.css"/>
-<!-- ═══ FONTS ═══ -->
-<link href="https://fonts.googleapis.com/css2?family=Oxanium:wght@400;600;700;800&family=Fira+Code:wght@400;500;600&family=Nunito:wght@400;500;600;700&display=swap" rel="stylesheet"/>
-<!-- ═══ CSS KITA ═══ -->
-<link rel="stylesheet" href="style.css"/>
+    --t1: #2f88b3;
+    --t1-dim: #1d3a47;
+    --t1-glow: rgba(47,136,179,0.35);
+
+    --t2: #c1443c;
+    --t2-dim: #3c2321;
+    --t2-glow: rgba(193,68,60,0.35);
+
+    --gold: #d4a73c;
+    --good: #4a9d6e;
+    --bad: #c1443c;
+
+    --radius: 18px;
+    --radius-sm: 12px;
+    --shadow: 0 10px 30px rgba(0,0,0,0.35);
+  }
+
+  *{box-sizing:border-box; -webkit-tap-highlight-color: transparent;}
+  html,body{margin:0;padding:0; overflow-x:hidden; width:100%;}
+  body{
+    background:
+      radial-gradient(1200px 600px at 15% -10%, rgba(47,136,179,0.10), transparent 60%),
+      radial-gradient(1200px 600px at 85% 110%, rgba(193,68,60,0.10), transparent 60%),
+      var(--bg);
+    color:var(--ink);
+    font-family:'Inter',system-ui,sans-serif;
+    min-height:100vh;
+    padding-bottom:48px;
+  }
+
+  ::selection{background:var(--gold); color:#14181d;}
+
+  /* ---------- pip divider signature ---------- */
+  .pip-row{display:flex; align-items:center; justify-content:center; gap:10px; margin:6px 0;}
+  .pip-row .line{flex:1; height:1px; background:linear-gradient(90deg, transparent, var(--line), transparent);}
+  .pips{display:grid; grid-template-columns:repeat(3, 7px); grid-template-rows:repeat(3,7px); gap:4px; padding:8px 10px; border:1.5px solid var(--line); border-radius:6px; background:var(--bg-raise);}
+  .pips i{width:7px; height:7px; border-radius:50%; background:transparent;}
+  .pips i.on{background:var(--gold);}
+
+  /* ---------- header ---------- */
+  header{
+    padding:20px 16px 8px;
+    display:flex; align-items:center; justify-content:space-between; gap:12px;
+    max-width:920px; margin:0 auto;
+  }
+  .brand{display:flex; flex-direction:column; line-height:1;}
+  .brand .eyebrow{font-family:'Inter'; font-size:11px; letter-spacing:.18em; color:var(--ink-faint); font-weight:700; text-transform:uppercase;}
+  .brand h1{
+    font-family:'Barlow Condensed', sans-serif;
+    font-weight:800; font-size:34px; letter-spacing:.01em;
+    margin:2px 0 0; color:var(--ink);
+  }
+  .brand h1 span{color:var(--gold);}
+  .header-actions{display:flex; gap:8px;}
+  .icon-btn{
+    width:40px; height:40px; border-radius:12px; border:1px solid var(--line);
+    background:var(--card); color:var(--ink-dim); display:flex; align-items:center; justify-content:center;
+    cursor:pointer; transition:.15s; font-size:16px;
+  }
+  .icon-btn:active{transform:scale(.94);}
+  .icon-btn:hover{color:var(--ink); border-color:var(--ink-faint);}
+
+  main{max-width:920px; margin:0 auto; padding:0 16px;}
+
+  /* ---------- status pill ---------- */
+  .status-wrap{display:flex; justify-content:center; margin:10px 0 4px;}
+  .status-pill{
+    font-family:'Inter'; font-weight:700; font-size:12px; letter-spacing:.12em; text-transform:uppercase;
+    color:var(--ink-dim); background:var(--card); border:1px solid var(--line);
+    padding:7px 16px; border-radius:999px; display:flex; align-items:center; gap:8px;
+  }
+  .status-pill .dot{width:7px; height:7px; border-radius:50%; background:var(--good); box-shadow:0 0 0 3px rgba(74,157,110,0.2); animation:pulse 1.8s infinite;}
+  @keyframes pulse{0%,100%{opacity:1;} 50%{opacity:.4;}}
+
+  /* ---------- wins board ---------- */
+  .wins-board{
+    background:linear-gradient(180deg, var(--card-2), var(--card));
+    border:1px solid var(--line); border-radius:var(--radius);
+    box-shadow:var(--shadow);
+    padding:18px 14px 14px; margin-top:14px;
+    position:relative; overflow:hidden;
+  }
+  .wins-grid{display:grid; grid-template-columns:minmax(0,1fr) auto minmax(0,1fr); align-items:center; gap:6px;}
+  .wins-side{text-align:center; min-width:0;}
+  .wins-side .team-name{
+    font-weight:700; font-size:13px; letter-spacing:.03em; color:var(--ink-dim);
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis; padding:0 4px;
+  }
+  .wins-side.t1 .team-name{color:var(--t1);}
+  .wins-side.t2 .team-name{color:var(--t2);}
+  .wins-num{
+    font-family:'Barlow Condensed', sans-serif; font-weight:800; font-size:76px; line-height:.95;
+    margin:2px 0; letter-spacing:-.01em;
+  }
+  .wins-side.t1 .wins-num{color:var(--t1); text-shadow:0 0 30px var(--t1-glow);}
+  .wins-side.t2 .wins-num{color:var(--t2); text-shadow:0 0 30px var(--t2-glow);}
+  .wins-label{font-size:10px; letter-spacing:.16em; color:var(--ink-faint); font-weight:700; text-transform:uppercase;}
+  .vs{
+    font-family:'Barlow Condensed'; font-weight:700; font-size:15px; color:var(--ink-faint);
+    letter-spacing:.05em; padding:0 6px;
+  }
+
+  /* ---------- round card ---------- */
+  .round-card{
+    background:var(--card); border:1px solid var(--line); border-radius:var(--radius);
+    padding:16px; margin-top:14px; box-shadow:var(--shadow);
+  }
+  .round-title{display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;}
+  .round-title h2{
+    font-family:'Barlow Condensed'; font-size:22px; font-weight:700; margin:0; color:var(--ink);
+    letter-spacing:.02em;
+  }
+  .round-title .maxinfo{font-size:12px; color:var(--ink-faint); font-weight:600;}
+
+  .teams-cols{display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:10px;}
+  .team-col{
+    background:var(--bg-raise); border-radius:var(--radius-sm); padding:16px 12px; border:1.5px solid var(--line);
+    display:flex; flex-direction:column; align-items:center; gap:9px; position:relative;
+    transition:.2s; min-width:0;
+  }
+  .team-col.t1{border-color:var(--t1-dim);}
+  .team-col.t2{border-color:var(--t2-dim);}
+  .team-col.leading.t1{border-color:var(--t1); box-shadow:0 0 0 1px var(--t1) inset;}
+  .team-col.leading.t2{border-color:var(--t2); box-shadow:0 0 0 1px var(--t2) inset;}
+
+  .team-col .tname{
+    font-weight:700; font-size:13px; text-align:center; color:var(--ink);
+    max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+  }
+  .team-col.t1 .tname{color:var(--t1);}
+  .team-col.t2 .tname{color:var(--t2);}
+
+  .point-display{
+    font-family:'Barlow Condensed'; font-weight:800; font-size:56px; line-height:1;
+    color:var(--ink); margin-top:2px;
+  }
+  .mini-label{
+    font-size:10px; font-weight:700; letter-spacing:.09em; text-transform:uppercase;
+    color:var(--ink-faint); margin:2px 0 -2px;
+  }
+  .turn-block{width:100%; max-width:200px; display:flex; flex-direction:column; align-items:center; gap:6px;}
+  .turn-row{display:flex; align-items:center; gap:6px; width:100%;}
+  .turn-input{
+    flex:1; min-width:0; text-align:center; background:var(--bg); border:1.5px solid var(--line);
+    border-radius:9px; outline:none; color:var(--ink); font-family:'Inter'; font-weight:700; font-size:16px;
+    padding:10px 4px; -moz-appearance:textfield;
+  }
+  .turn-input::-webkit-outer-spin-button, .turn-input::-webkit-inner-spin-button{-webkit-appearance:none; margin:0;}
+  .turn-input:focus{border-color:var(--gold);}
+  .turn-ok{
+    border:none; border-radius:9px; padding:10px 16px; font-weight:800; font-size:13px;
+    color:#fff; cursor:pointer; white-space:nowrap; flex-shrink:0;
+  }
+  .team-col.t1 .turn-ok{background:var(--t1);}
+  .team-col.t2 .turn-ok{background:var(--t2);}
+  .turn-ok:active{transform:scale(.93);}
+
+  .col-divider{width:32px; height:1.5px; background:var(--line); border-radius:2px; margin:2px 0;}
+
+  .controls-row{display:flex; align-items:center; justify-content:center; gap:6px; width:100%;}
+
+  .step-btn{
+    flex:1; height:40px; border-radius:10px; border:none; cursor:pointer;
+    font-family:'Inter'; font-weight:800; font-size:18px; color:#fff;
+    display:flex; align-items:center; justify-content:center; transition:.12s;
+  }
+  .team-col.t1 .step-btn{background:var(--t1);}
+  .team-col.t2 .step-btn{background:var(--t2);}
+  .step-btn:active{transform:scale(.9);}
+  .step-btn.minus{opacity:.85;}
+
+  .quick-btn{
+    flex:1; border:1px solid var(--line); background:var(--card); color:var(--ink-dim);
+    font-size:12px; font-weight:700; padding:0; height:36px; border-radius:10px; cursor:pointer;
+  }
+  .quick-btn:active{transform:scale(.93);}
+
+  .progress-track{width:100%; height:7px; background:var(--line); border-radius:99px; overflow:hidden;}
+  .progress-fill{height:100%; border-radius:99px; transition:width .35s ease;}
+  .team-col.t1 .progress-fill{background:var(--t1);}
+  .team-col.t2 .progress-fill{background:var(--t2);}
+  .progress-pct{font-size:10px; color:var(--ink-faint); font-weight:700;}
+
+  .util-row{display:flex; gap:8px; margin-top:16px;}
+  .util-btn{
+    flex:1; background:var(--bg-raise); border:1px solid var(--line); color:var(--ink-dim);
+    font-weight:600; font-size:12.5px; padding:12px; border-radius:11px; cursor:pointer;
+  }
+  .util-btn:active{transform:scale(.97);}
+  .util-btn.warn{color:var(--bad); border-color:rgba(193,68,60,0.35);}
+
+  /* ---------- settings ---------- */
+  .settings-card{
+    background:var(--card); border:1px solid var(--line); border-radius:var(--radius);
+    padding:16px; margin-top:14px; display:none; box-shadow:var(--shadow);
+  }
+  .settings-card.open{display:block; animation:slideIn .22s ease;}
+  @keyframes slideIn{from{opacity:0; transform:translateY(-6px);} to{opacity:1; transform:translateY(0);}}
+  .settings-card h3{
+    font-family:'Barlow Condensed'; font-size:20px; margin:0 0 12px; font-weight:700; letter-spacing:.02em;
+  }
+  .field{margin-bottom:12px;}
+  .field label{display:block; font-size:11px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-faint); margin-bottom:6px;}
+  .field input{
+    width:100%; background:var(--bg-raise); border:1.5px solid var(--line); color:var(--ink);
+    padding:11px 12px; border-radius:10px; font-size:15px; font-family:'Inter'; font-weight:600;
+    outline:none;
+  }
+  .field input:focus{border-color:var(--gold);}
+  .settings-actions{display:flex; gap:8px; margin-top:14px;}
+  .btn{
+    flex:1; padding:12px; border-radius:11px; border:1px solid var(--line); cursor:pointer;
+    font-weight:700; font-size:13.5px; font-family:'Inter'; background:var(--bg-raise); color:var(--ink);
+  }
+  .btn.primary{background:var(--gold); color:#1a1206; border:none;}
+  .btn:active{transform:scale(.97);}
+
+  /* ---------- history ---------- */
+  .history-card{
+    background:var(--card); border:1px solid var(--line); border-radius:var(--radius);
+    padding:16px; margin-top:14px; box-shadow:var(--shadow);
+  }
+  .history-card h3{
+    font-family:'Barlow Condensed'; font-size:20px; margin:0 0 10px; font-weight:700; letter-spacing:.02em;
+    display:flex; align-items:center; justify-content:space-between;
+  }
+  .history-card h3 small{font-family:'Inter'; font-size:11px; color:var(--ink-faint); font-weight:600;}
+  .history-empty{color:var(--ink-faint); font-size:13.5px; text-align:center; padding:22px 0;}
+  .h-row{
+    display:grid; grid-template-columns:34px 1fr 1fr 70px; gap:8px; align-items:center;
+    padding:10px 6px; border-bottom:1px solid var(--line); font-size:13px;
+  }
+  .h-row:last-child{border-bottom:none;}
+  .h-round{
+    font-family:'Barlow Condensed'; font-weight:800; font-size:16px; color:var(--ink-faint); text-align:center;
+  }
+  .h-team{display:flex; flex-direction:column; gap:1px;}
+  .h-team .n{font-weight:700; font-size:12.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .h-team .p{font-size:16px; font-weight:800; font-family:'Barlow Condensed';}
+  .h-team.win .n, .h-team.win .p{color:var(--gold);}
+  .h-team.win .n::before{content:"👑 "; font-size:10px;}
+  .h-tag{
+    font-size:9.5px; font-weight:800; letter-spacing:.06em; text-align:right; color:var(--ink-faint);
+    text-transform:uppercase;
+  }
+
+  /* ---------- modal ---------- */
+  .modal-overlay{
+    position:fixed; inset:0; background:rgba(8,10,13,0.72); backdrop-filter:blur(3px);
+    display:none; align-items:flex-end; justify-content:center; z-index:100; padding:0;
+  }
+  .modal-overlay.open{display:flex; animation:fadeIn .15s ease;}
+  @keyframes fadeIn{from{opacity:0;} to{opacity:1;}}
+  .modal{
+    background:var(--card-2); border:1px solid var(--line); border-radius:20px 20px 0 0;
+    width:100%; max-width:460px; padding:22px 20px 20px; box-shadow:0 -10px 40px rgba(0,0,0,0.5);
+    animation:modalUp .22s cubic-bezier(.2,.9,.3,1);
+  }
+  @media(min-width:560px){
+    .modal-overlay{align-items:center;}
+    .modal{border-radius:20px;}
+  }
+  @keyframes modalUp{from{transform:translateY(30px); opacity:0;} to{transform:translateY(0); opacity:1;}}
+  .modal h3{font-family:'Barlow Condensed'; font-size:24px; margin:0 0 6px; font-weight:800;}
+  .modal p{color:var(--ink-dim); font-size:14px; line-height:1.55; margin:0 0 14px;}
+  .modal .summary{
+    background:var(--bg-raise); border:1px solid var(--line); border-radius:12px; padding:12px 14px; margin-bottom:14px;
+  }
+  .summary-line{display:flex; justify-content:space-between; font-size:14px; padding:4px 0;}
+  .summary-line b{font-weight:800;}
+  .summary-line.win b{color:var(--gold);}
+  .modal-actions{display:flex; gap:10px;}
+
+  /* ---------- toast ---------- */
+  .toast-wrap{position:fixed; top:16px; left:50%; transform:translateX(-50%); z-index:200; display:flex; flex-direction:column; gap:8px; width:min(92%,420px);}
+  .toast{
+    background:var(--card-2); border:1px solid var(--line); border-left:4px solid var(--gold);
+    padding:12px 14px; border-radius:10px; font-size:13.5px; font-weight:600; color:var(--ink);
+    box-shadow:var(--shadow); animation:toastIn .2s ease;
+  }
+  .toast.win-toast{border-left-color:var(--good);}
+  @keyframes toastIn{from{opacity:0; transform:translateY(-10px);} to{opacity:1; transform:translateY(0);}}
+  .toast.leaving{animation:toastOut .2s ease forwards;}
+  @keyframes toastOut{to{opacity:0; transform:translateY(-10px);}}
+
+  /* ---------- win overlay banner ---------- */
+  .win-banner{
+    position:fixed; inset:0; z-index:150; display:none; align-items:center; justify-content:center;
+    background:rgba(8,10,13,0.55); backdrop-filter:blur(2px);
+  }
+  .win-banner.show{display:flex; animation:fadeIn .15s ease;}
+  .win-banner .box{
+    text-align:center; padding:34px 30px; border-radius:22px; background:var(--card-2);
+    border:1px solid var(--line); box-shadow:0 20px 60px rgba(0,0,0,0.5);
+    animation:popIn .35s cubic-bezier(.2,.9,.3,1.2);
+  }
+  @keyframes popIn{0%{transform:scale(.7); opacity:0;} 100%{transform:scale(1); opacity:1;}}
+  .win-banner .trophy{font-size:44px; margin-bottom:6px;}
+  .win-banner .who{font-family:'Barlow Condensed'; font-weight:800; font-size:30px; margin:0;}
+  .win-banner .plus{
+    font-family:'Barlow Condensed'; font-weight:800; font-size:22px; color:var(--gold); margin-top:8px;
+  }
+
+  footer{text-align:center; color:var(--ink-faint); font-size:11px; margin-top:26px; letter-spacing:.04em;}
+
+  @media(min-width:640px){
+    .wins-num{font-size:92px;}
+    .point-display{font-size:66px;}
+  }
+</style>
 </head>
 <body>
 
-<!-- ╔══════════════ HEADER ══════════════╗ -->
-<div id="hd">
-  <div class="brand">LeafletMap <span>PRO</span></div>
-  <div class="hpills">
-    <div class="hp" id="hGPS"><div class="d"></div>GPS Saya</div>
-    <div class="hp" id="hFB"><div class="d"></div>Firebase</div>
-    <div class="hp" id="hRt"><div class="d"></div>Routing</div>
-    <div class="hp" id="hDr"><div class="d"></div>Draw</div>
-    <div class="hp" id="hCl"><div class="d"></div>Cluster</div>
-    <div class="hp" id="hHt"><div class="d"></div>Heatmap</div>
-    <div class="hp" id="hGj"><div class="d"></div>GeoJSON</div>
-    <div class="hp" id="hMs"><div class="d"></div>Measure</div>
-    <div class="hp" id="hWt"><div class="d"></div>Watch</div>
+<div class="toast-wrap" id="toastWrap"></div>
+
+<header>
+  <div class="brand">
+    <span class="eyebrow">Skor Meja</span>
+    <h1>DOMINO <span>MANDAN</span></h1>
+  </div>
+  <div class="header-actions">
+    <button class="icon-btn" id="fullscreenBtn" title="Fullscreen">⛶</button>
+    <button class="icon-btn" id="settingsBtn" title="Pengaturan">⚙</button>
+  </div>
+</header>
+
+<main>
+
+  <div class="status-wrap">
+    <div class="status-pill" id="statusPill"><span class="dot"></span><span id="statusText">RONDE BERLANGSUNG</span></div>
+  </div>
+
+  <!-- SETTINGS -->
+  <section class="settings-card" id="settingsCard">
+    <h3>Pengaturan Permainan</h3>
+    <div class="field">
+      <label>Nama Tim 1</label>
+      <input type="text" id="inputTeam1" maxlength="24">
+    </div>
+    <div class="field">
+      <label>Nama Tim 2</label>
+      <input type="text" id="inputTeam2" maxlength="24">
+    </div>
+    <div class="field">
+      <label>Poin Maksimum Ronde</label>
+      <input type="number" id="inputMax" min="1">
+    </div>
+    <div class="settings-actions">
+      <button class="btn" id="cancelSettings">Tutup</button>
+      <button class="btn primary" id="saveSettings">Simpan</button>
+    </div>
+  </section>
+
+  <!-- WINS BOARD -->
+  <section class="wins-board">
+    <div class="wins-grid">
+      <div class="wins-side t1">
+        <div class="team-name" id="winsName1">Tim 1</div>
+        <div class="wins-num" id="winsNum1">0</div>
+        <div class="wins-label">Menang</div>
+      </div>
+      <div class="vs">VS</div>
+      <div class="wins-side t2">
+        <div class="team-name" id="winsName2">Tim 2</div>
+        <div class="wins-num" id="winsNum2">0</div>
+        <div class="wins-label">Menang</div>
+      </div>
+    </div>
+    <div class="pip-row">
+      <div class="line"></div>
+      <div class="pips" id="pipsBox"></div>
+      <div class="line"></div>
+    </div>
+  </section>
+
+  <!-- ROUND CARD -->
+  <section class="round-card">
+    <div class="round-title">
+      <h2 id="roundLabel">Ronde 1</h2>
+      <span class="maxinfo">Poin Maks: <b id="maxLabel">10</b></span>
+    </div>
+
+    <div class="teams-cols">
+      <div class="team-col t1" id="col1">
+        <div class="tname" id="colName1">Tim 1</div>
+        <div class="point-display" id="pointDisplay1">0</div>
+        <div class="progress-track"><div class="progress-fill" id="fill1" style="width:0%"></div></div>
+        <div class="progress-pct" id="pct1">0%</div>
+        <div class="col-divider"></div>
+        <div class="turn-block">
+          <span class="mini-label">Poin Putaran Ini</span>
+          <div class="turn-row">
+            <input class="turn-input" id="turnInput1" type="number" inputmode="numeric" min="0" placeholder="0">
+            <button class="turn-ok" data-team="1" id="turnOk1">OK</button>
+          </div>
+        </div>
+        <div class="controls-row">
+          <button class="step-btn minus" data-team="1" data-delta="-1">−</button>
+          <button class="step-btn" data-team="1" data-delta="1">+</button>
+        </div>
+        <div class="controls-row">
+          <button class="quick-btn" data-team="1" data-delta="5">+5</button>
+          <button class="quick-btn" data-team="1" data-reset="1">Reset</button>
+        </div>
+      </div>
+
+      <div class="team-col t2" id="col2">
+        <div class="tname" id="colName2">Tim 2</div>
+        <div class="point-display" id="pointDisplay2">0</div>
+        <div class="progress-track"><div class="progress-fill" id="fill2" style="width:0%"></div></div>
+        <div class="progress-pct" id="pct2">0%</div>
+        <div class="col-divider"></div>
+        <div class="turn-block">
+          <span class="mini-label">Poin Putaran Ini</span>
+          <div class="turn-row">
+            <input class="turn-input" id="turnInput2" type="number" inputmode="numeric" min="0" placeholder="0">
+            <button class="turn-ok" data-team="2" id="turnOk2">OK</button>
+          </div>
+        </div>
+        <div class="controls-row">
+          <button class="step-btn minus" data-team="2" data-delta="-1">−</button>
+          <button class="step-btn" data-team="2" data-delta="1">+</button>
+        </div>
+        <div class="controls-row">
+          <button class="quick-btn" data-team="2" data-delta="5">+5</button>
+          <button class="quick-btn" data-team="2" data-reset="1">Reset</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="util-row">
+      <button class="util-btn" id="undoBtn">↺ Undo Ronde Terakhir</button>
+      <button class="util-btn warn" id="resetBtn">⚠ Reset Permainan</button>
+    </div>
+  </section>
+
+  <!-- HISTORY -->
+  <section class="history-card">
+    <h3>Histori Permainan <small id="historyCount">0 ronde</small></h3>
+    <div id="historyList"><div class="history-empty">Belum ada ronde yang selesai.</div></div>
+  </section>
+
+  <footer>Data tersimpan otomatis di perangkat ini · Tidak ada koneksi internet diperlukan</footer>
+</main>
+
+<!-- UNDO CONFIRM MODAL -->
+<div class="modal-overlay" id="undoModal">
+  <div class="modal">
+    <h3>Undo Ronde Terakhir?</h3>
+    <p>Ronde terakhir akan dihapus dari histori dan skor kemenangan akan dikembalikan.</p>
+    <div class="modal-actions">
+      <button class="btn" id="undoCancel">Batal</button>
+      <button class="btn primary" id="undoConfirm">Ya, Undo</button>
+    </div>
   </div>
 </div>
 
-<!-- ╔══════════════ APP ══════════════╗ -->
-<div id="app">
-
-  <!-- ╔═══ SIDEBAR ═══╗ -->
-  <div id="sb">
-    <div class="tabs">
-      <button class="tab on"  onclick="T('gps')">📡 GPS</button>
-      <button class="tab"     onclick="T('fb')">🔥 Firebase</button>
-      <button class="tab"     onclick="T('dest')">📍 Tujuan</button>
-      <button class="tab"     onclick="T('layers')">🗂 Layers</button>
-      <button class="tab"     onclick="T('shapes')">✏️ Shapes</button>
-      <button class="tab"     onclick="T('tools')">🛠 Tools</button>
-      <button class="tab"     onclick="T('events')">📊 Events</button>
-    </div>
-
-    <!-- ════════════ TAB: GPS SAYA ════════════ -->
-    <div class="pnl on" id="pnl-gps">
-      <div class="sec">
-        <div class="sec-t">Lokasi Saya — GPS HP / Laptop</div>
-        <div class="sg">
-          <div class="st f"><div class="sl">Koordinat GPS</div><div class="sv" id="gCoord">Belum dideteksi</div></div>
-          <div class="st"><div class="sl">Akurasi</div><div class="sv am" id="gAcc">—</div></div>
-          <div class="st"><div class="sl">Kecepatan</div><div class="sv gr" id="gSpd">—</div></div>
-          <div class="st"><div class="sl">Heading</div><div class="sv wh" id="gHdg">—</div></div>
-          <div class="st"><div class="sl">Altitude</div><div class="sv wh" id="gAlt">—</div></div>
-          <div class="st"><div class="sl">Terakhir Update</div><div class="sv wh" id="gUpd">—</div></div>
-        </div>
-        <button class="btn b-cy" id="btnGPS" onclick="deteksiGPS()">📡 Deteksi GPS Saya</button>
-        <div class="g2" style="margin-top:5px">
-          <button class="btn b-gh" id="btnWatch" onclick="toggleWatch()">👁 Watch Realtime</button>
-          <button class="btn b-gh" onclick="kePosSaya()">🎯 Ke Posisi Saya</button>
-        </div>
-      </div>
-      <div class="sec">
-        <div class="sec-t">Jejak Perjalanan GPS</div>
-        <div class="sg" style="margin-bottom:8px">
-          <div class="st"><div class="sl">Titik Jejak</div><div class="sv" id="trPt">0</div></div>
-          <div class="st"><div class="sl">Total Jarak</div><div class="sv gr" id="trKm">0 m</div></div>
-        </div>
-        <div class="g2">
-          <button class="btn b-gh" onclick="hapusJejak()">🗑 Hapus Jejak</button>
-          <button class="btn b-gh" onclick="fitJejak()">⊡ Fit Jejak</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- ════════════ TAB: FIREBASE ════════════ -->
-    <div class="pnl" id="pnl-fb">
-      <div class="sec">
-        <div class="sec-t">Konfigurasi Firebase</div>
-        <div class="fl"><label>API Key</label><input class="inp" id="fbKey" placeholder="AIzaSy..."/></div>
-        <div class="fl"><label>Auth Domain</label><input class="inp" id="fbAuth" placeholder="project.firebaseapp.com"/></div>
-        <div class="fl"><label>Project ID</label><input class="inp" id="fbPid" placeholder="nama-project-firebase"/></div>
-        <div class="fl"><label>App ID</label><input class="inp" id="fbApp" placeholder="1:000:web:abc123"/></div>
-        <div class="fl"><label>Nama Collection</label><input class="inp" id="fbCol" value="tujuan"/></div>
-        <button class="btn b-cy" onclick="hubungFB()">🔥 Hubungkan Firebase</button>
-        <button class="btn b-gh" onclick="loadDemo()">🗺 Gunakan Data Demo</button>
-      </div>
-      <div class="sec">
-        <div class="sec-t">Status Koneksi</div>
-        <div class="sg">
-          <div class="st f"><div class="sl">Status</div><div class="sv" id="fbStat" style="color:var(--mt)">Belum terhubung</div></div>
-          <div class="st"><div class="sl">Collection</div><div class="sv" id="fbColD">—</div></div>
-          <div class="st"><div class="sl">Jumlah Tujuan</div><div class="sv gr" id="fbJml">0</div></div>
-        </div>
-      </div>
-      <div class="sec">
-        <div class="sec-t">Format Dokumen Firestore</div>
-        <p style="font-size:.68rem;color:var(--mt);margin-bottom:8px;line-height:1.6">
-          Dokumen dari ESP32 atau input manual harus memiliki field:
-        </p>
-        <div class="codeblk">
-          <span class="ck">{</span><br>
-          &nbsp;&nbsp;<span class="ck">"nama"</span>: <span class="cv">"Nama Tempat"</span>,<br>
-          &nbsp;&nbsp;<span class="ck">"kategori"</span>: <span class="cv">"Wisata"</span>,<br>
-          &nbsp;&nbsp;<span class="ck">"deskripsi"</span>: <span class="cv">"Keterangan"</span>,<br>
-          &nbsp;&nbsp;<span class="ck">"lat"</span>: <span class="cn">-6.2088</span>,<br>
-          &nbsp;&nbsp;<span class="ck">"lng"</span>: <span class="cn">106.8456</span><br>
-          <span class="ck">}</span>
-        </div>
-      </div>
-    </div>
-
-    <!-- ════════════ TAB: TUJUAN ════════════ -->
-    <div class="pnl" id="pnl-dest">
-      <div id="rcard">
-        <div class="rc-lbl">🧭 Navigasi Aktif</div>
-        <div class="rc-nm" id="rcNm">—</div>
-        <div class="rc-row">
-          <div class="rc-cell"><div class="rl">Jarak</div><div class="rv" id="rcKm">—</div></div>
-          <div class="rc-cell"><div class="rl">Waktu</div><div class="rv" id="rcEta">—</div></div>
-          <div class="rc-cell"><div class="rl">Tiba</div><div class="rv" id="rcTiba" style="font-size:.72rem">—</div></div>
-        </div>
-        <button class="btn b-rd" onclick="hapusRute()" style="font-size:.65rem;padding:6px">✕ Hentikan Navigasi</button>
-      </div>
-      <div class="sec" style="padding-bottom:7px">
-        <div class="sec-t">
-          Tujuan dari Firebase
-          <span id="jmlBdg" style="margin-left:4px;background:var(--ln2);border-radius:10px;padding:1px 7px;font-size:.55rem;color:var(--c1)">0</span>
-        </div>
-        <div class="g3">
-          <button class="btn b-gh" style="margin-bottom:0" onclick="fitSemuaTujuan()">⊡ Fit</button>
-          <button class="btn b-gh" style="margin-bottom:0" onclick="hapusRute()">✕ Rute</button>
-          <button class="btn b-gh" style="margin-bottom:0" onclick="T('tools')">＋ Tambah</button>
-        </div>
-      </div>
-      <div id="daftarDest" style="flex:1">
-        <div class="empty"><div class="ei">🔥</div><p>Hubungkan Firebase<br>di tab Firebase</p></div>
-      </div>
-    </div>
-
-    <!-- ════════════ TAB: LAYERS ════════════ -->
-    <div class="pnl" id="pnl-layers">
-      <div class="sec">
-        <div class="sec-t">Base Tile Layer</div>
-        <div class="g2">
-          <button class="btn b-gh" onclick="setTile('dark')">🌑 Dark</button>
-          <button class="btn b-gh" onclick="setTile('light')">☀️ Light</button>
-          <button class="btn b-gh" onclick="setTile('satellite')">🛰 Satelit</button>
-          <button class="btn b-gh" onclick="setTile('osm')">🗺 OSM</button>
-          <button class="btn b-gh" onclick="setTile('topo')">⛰ Topo</button>
-          <button class="btn b-gh" onclick="setTile('watercolor')">🎨 Watercolor</button>
-          <button class="btn b-gh" onclick="setTile('transport')">🚌 Transport</button>
-          <button class="btn b-gh" onclick="setTile('cycle')">🚴 Cycling</button>
-        </div>
-      </div>
-      <div class="sec">
-        <div class="sec-t">Opacity Tile</div>
-        <div class="fl">
-          <label>Opacity: <span id="opVal">1.0</span></label>
-          <input type="range" min=".1" max="1" step=".05" value="1" oninput="setTileOp(this.value)"/>
-        </div>
-      </div>
-      <div class="sec">
-        <div class="sec-t">Overlay Layers</div>
-        <div class="tog-row"><span>🔥 Heatmap Tujuan</span><label class="tog"><input type="checkbox" id="tHeat" onchange="toggleHeatmap(this.checked)"/><div class="tsl"></div></label></div>
-        <div class="tog-row"><span>📍 Marker Cluster</span><label class="tog"><input type="checkbox" id="tCluster" onchange="toggleCluster(this.checked)"/><div class="tsl"></div></label></div>
-        <div class="tog-row"><span>🌐 GeoJSON Wilayah</span><label class="tog"><input type="checkbox" id="tGeo" onchange="toggleGeoJSON(this.checked)"/><div class="tsl"></div></label></div>
-        <div class="tog-row"><span>📏 Scale Bar</span><label class="tog"><input type="checkbox" id="tScale" checked onchange="toggleScale(this.checked)"/><div class="tsl"></div></label></div>
-        <div class="tog-row"><span>🗺 Minimap</span><label class="tog"><input type="checkbox" id="tMini" onchange="toggleMinimap(this.checked)"/><div class="tsl"></div></label></div>
-        <div class="tog-row"><span>📐 Grid Koordinat</span><label class="tog"><input type="checkbox" id="tGrid" onchange="toggleGrid(this.checked)"/><div class="tsl"></div></label></div>
-        <div class="tog-row"><span>🖼 Image Overlay</span><label class="tog"><input type="checkbox" id="tImg" onchange="toggleImageOverlay(this.checked)"/><div class="tsl"></div></label></div>
-      </div>
-      <div class="sec">
-        <div class="sec-t">Layer Control Panel</div>
-        <button class="btn b-gh" onclick="addLayerControl()">⊞ Tambah Layer Control</button>
-        <button class="btn b-gh" onclick="removeLayerControl()">✕ Hapus Layer Control</button>
-      </div>
-    </div>
-
-    <!-- ════════════ TAB: SHAPES ════════════ -->
-    <div class="pnl" id="pnl-shapes">
-      <div class="sec">
-        <div class="sec-t">Marker</div>
-        <div class="fl"><label>Label</label><input class="inp" id="mLbl" placeholder="Nama marker"/></div>
-        <div class="fl"><label>Ikon</label>
-          <select class="inp" id="mIkon">
-            <option>📍</option><option>⭐</option><option>🏠</option><option>🏢</option>
-            <option>🍔</option><option>🏥</option><option>⛽</option><option>🎭</option>
-            <option>📚</option><option>🕌</option><option>🚩</option><option>💎</option>
-          </select>
-        </div>
-        <div class="fl"><label>Warna</label>
-          <div class="swatches" id="swM">
-            <div class="sw on" style="background:#00e5ff" data-c="#00e5ff" onclick="pilihWarna(this,'m')"></div>
-            <div class="sw" style="background:#ff6b35" data-c="#ff6b35" onclick="pilihWarna(this,'m')"></div>
-            <div class="sw" style="background:#39ff88" data-c="#39ff88" onclick="pilihWarna(this,'m')"></div>
-            <div class="sw" style="background:#c084fc" data-c="#c084fc" onclick="pilihWarna(this,'m')"></div>
-            <div class="sw" style="background:#fbbf24" data-c="#fbbf24" onclick="pilihWarna(this,'m')"></div>
-            <div class="sw" style="background:#f43f5e" data-c="#f43f5e" onclick="pilihWarna(this,'m')"></div>
-          </div>
-        </div>
-        <div class="g2">
-          <button class="btn b-cy" onclick="tambahMarkerCenter()">📍 Di Center</button>
-          <button class="btn b-gh" onclick="modePilih('marker')">🖱 Klik Peta</button>
-        </div>
-      </div>
-      <div class="sec">
-        <div class="sec-t">Circle &amp; CircleMarker</div>
-        <div class="fl"><label>Radius (meter)</label><input class="inp" id="circR" type="number" value="500" min="1"/></div>
-        <div class="fl"><label>Warna</label>
-          <div class="swatches" id="swC">
-            <div class="sw on" style="background:#00e5ff" data-c="#00e5ff" onclick="pilihWarna(this,'c')"></div>
-            <div class="sw" style="background:#ff6b35" data-c="#ff6b35" onclick="pilihWarna(this,'c')"></div>
-            <div class="sw" style="background:#39ff88" data-c="#39ff88" onclick="pilihWarna(this,'c')"></div>
-            <div class="sw" style="background:#c084fc" data-c="#c084fc" onclick="pilihWarna(this,'c')"></div>
-            <div class="sw" style="background:#fbbf24" data-c="#fbbf24" onclick="pilihWarna(this,'c')"></div>
-          </div>
-        </div>
-        <div class="g3">
-          <button class="btn b-or" onclick="tambahCircle()">⭕ Circle</button>
-          <button class="btn b-gh" onclick="tambahCircleMarker()">• CMarker</button>
-          <button class="btn b-gh" onclick="modePilih('circle')">🖱 Klik</button>
-        </div>
-      </div>
-      <div class="sec">
-        <div class="sec-t">Polygon · Polyline · Rectangle</div>
-        <div class="fl"><label>Warna</label>
-          <div class="swatches" id="swP">
-            <div class="sw on" style="background:#39ff88" data-c="#39ff88" onclick="pilihWarna(this,'p')"></div>
-            <div class="sw" style="background:#00e5ff" data-c="#00e5ff" onclick="pilihWarna(this,'p')"></div>
-            <div class="sw" style="background:#ff6b35" data-c="#ff6b35" onclick="pilihWarna(this,'p')"></div>
-            <div class="sw" style="background:#c084fc" data-c="#c084fc" onclick="pilihWarna(this,'p')"></div>
-            <div class="sw" style="background:#fbbf24" data-c="#fbbf24" onclick="pilihWarna(this,'p')"></div>
-          </div>
-        </div>
-        <div class="g3">
-          <button class="btn b-gr" onclick="tambahPolyline()">〰 Line</button>
-          <button class="btn b-gr" onclick="tambahPolygon()">⬡ Polygon</button>
-          <button class="btn b-gh" onclick="tambahRect()">▭ Rect</button>
-        </div>
-      </div>
-      <div class="sec">
-        <div class="sec-t">Kelola Shapes</div>
-        <div class="g2">
-          <button class="btn b-rd" onclick="hapusSemuaShape()">🗑 Hapus Semua</button>
-          <button class="btn b-gh" onclick="fitSemuaShape()">⊡ Fit Semua</button>
-        </div>
-        <div id="shapeList" style="margin-top:8px"></div>
-      </div>
-    </div>
-
-    <!-- ════════════ TAB: TOOLS ════════════ -->
-    <div class="pnl" id="pnl-tools">
-      <div class="sec">
-        <div class="sec-t">Routing — GPS Saya → Tujuan Firebase</div>
-        <div class="fl"><label>Pilih Tujuan</label>
-          <select class="inp" id="rtTo"><option value="">-- Pilih tujuan --</option></select>
-        </div>
-        <div class="fl"><label>Profil Rute</label>
-          <select class="inp" id="rtProf">
-            <option value="driving">🚗 Berkendara</option>
-            <option value="cycling">🚴 Bersepeda</option>
-            <option value="walking">🚶 Jalan kaki</option>
-          </select>
-        </div>
-        <button class="btn b-am" onclick="mulaiRute()">🧭 Mulai Navigasi</button>
-        <button class="btn b-rd" onclick="hapusRute()">✕ Hapus Rute</button>
-      </div>
-      <div class="sec">
-        <div class="sec-t">Draw Tools</div>
-        <div class="g3">
-          <button class="btn b-gh" onclick="draw('polyline')">〰 Line</button>
-          <button class="btn b-gh" onclick="draw('polygon')">⬡ Poly</button>
-          <button class="btn b-gh" onclick="draw('rectangle')">▭ Rect</button>
-          <button class="btn b-gh" onclick="draw('circle')">⭕ Circle</button>
-          <button class="btn b-gh" onclick="draw('marker')">📍 Mrk</button>
-          <button class="btn b-rd" onclick="draw('delete')">🗑 Del</button>
-        </div>
-      </div>
-      <div class="sec">
-        <div class="sec-t">Ukur Jarak &amp; Area</div>
-        <button class="btn b-pu" onclick="toast('Klik toolbar 📏 di kiri peta untuk mulai ukur','info')">📏 Info Pengukuran</button>
-      </div>
-      <div class="sec">
-        <div class="sec-t">Animasi Peta</div>
-        <div class="fl"><label>flyTo / panTo (lat,lng,zoom)</label>
-          <input class="inp" id="flyInp" placeholder="-6.2088,106.8456,13"/>
-        </div>
-        <div class="g2">
-          <button class="btn b-cy" onclick="doFlyTo()">✈ flyTo</button>
-          <button class="btn b-gh" onclick="doPanTo()">↔ panTo</button>
-        </div>
-        <div class="g3" style="margin-top:5px">
-          <button class="btn b-gh" onclick="doBounce()">↕ Bounce</button>
-          <button class="btn b-gh" onclick="doSpin()">🔄 Spin</button>
-          <button class="btn b-gh" onclick="doPathAnim()">▶ Path</button>
-        </div>
-        <button class="btn b-gh" style="margin-top:5px" onclick="resetView()">🏠 Reset View</button>
-      </div>
-      <div class="sec">
-        <div class="sec-t">Tambah Tujuan ke Firebase</div>
-        <div class="fl"><label>Nama</label><input class="inp" id="aNm" placeholder="Nama tempat"/></div>
-        <div class="fl"><label>Kategori</label>
-          <select class="inp" id="aKat">
-            <option>🏠 Rumah</option><option>🏢 Kantor</option><option>🍽 Restoran</option>
-            <option>🏥 Kesehatan</option><option>🎭 Wisata</option><option>🕌 Ibadah</option>
-            <option>🏫 Sekolah</option><option>⛽ SPBU</option><option>🛒 Belanja</option>
-            <option>📍 Lainnya</option>
-          </select>
-        </div>
-        <div class="r2">
-          <div class="fl"><label>Lat</label><input class="inp" id="aLat" type="number" step="any" placeholder="-6.2"/></div>
-          <div class="fl"><label>Lng</label><input class="inp" id="aLng" type="number" step="any" placeholder="106.8"/></div>
-        </div>
-        <div class="g2" style="margin-bottom:6px">
-          <button class="btn b-gh" style="margin-bottom:0" onclick="isiDariGPS()">📍 Dari GPS Saya</button>
-          <button class="btn b-gh" style="margin-bottom:0" onclick="modePilih('dest')">🖱 Klik Peta</button>
-        </div>
-        <button class="btn b-am" onclick="simpanTujuan()">💾 Simpan ke Firebase</button>
-      </div>
-      <div class="sec">
-        <div class="sec-t">Export</div>
-        <div class="g2">
-          <button class="btn b-gh" onclick="exportGeoJSON()">📁 GeoJSON</button>
-          <button class="btn b-gh" onclick="salinKoord()">📋 Salin Koordinat</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- ════════════ TAB: EVENTS ════════════ -->
-    <div class="pnl" id="pnl-events">
-      <div class="sec">
-        <div class="sec-t">Mouse &amp; Koordinat</div>
-        <div class="sg">
-          <div class="st f"><div class="sl">Lat, Lng</div><div class="sv" id="evLL">Gerakkan mouse di peta</div></div>
-          <div class="st f"><div class="sl">Pixel X, Y</div><div class="sv" id="evPx">—</div></div>
-        </div>
-      </div>
-      <div class="sec">
-        <div class="sec-t">Status Peta</div>
-        <div class="sg">
-          <div class="st f"><div class="sl">Center</div><div class="sv" id="evCtr">—</div></div>
-          <div class="st"><div class="sl">Zoom</div><div class="sv" id="evZm">—</div></div>
-          <div class="st"><div class="sl">Size (px)</div><div class="sv" id="evSz">—</div></div>
-          <div class="st f"><div class="sl">Bounds</div><div class="sv" id="evBd" style="font-size:.6rem">—</div></div>
-        </div>
-      </div>
-      <div class="sec">
-        <div class="sec-t">Event Log</div>
-        <div class="g2" style="margin-bottom:7px">
-          <button class="btn b-gh" style="margin-bottom:0" onclick="document.getElementById('evlog').innerHTML=''">🗑 Clear</button>
-          <button class="btn b-gh" style="margin-bottom:0" id="btnEvPause" onclick="toggleEvPause()">⏸ Pause</button>
-        </div>
-        <div id="evlog"><div class="evl">Menunggu event peta...</div></div>
-      </div>
-      <div class="sec">
-        <div class="sec-t">Map Options</div>
-        <div class="tog-row"><span>Scroll Zoom</span>
-          <label class="tog"><input type="checkbox" checked onchange="this.checked?map.scrollWheelZoom.enable():map.scrollWheelZoom.disable()"/><div class="tsl"></div></label>
-        </div>
-        <div class="tog-row"><span>Double Click Zoom</span>
-          <label class="tog"><input type="checkbox" checked onchange="this.checked?map.doubleClickZoom.enable():map.doubleClickZoom.disable()"/><div class="tsl"></div></label>
-        </div>
-        <div class="tog-row"><span>Dragging</span>
-          <label class="tog"><input type="checkbox" checked onchange="this.checked?map.dragging.enable():map.dragging.disable()"/><div class="tsl"></div></label>
-        </div>
-        <div class="tog-row"><span>Keyboard Nav</span>
-          <label class="tog"><input type="checkbox" checked onchange="this.checked?map.keyboard.enable():map.keyboard.disable()"/><div class="tsl"></div></label>
-        </div>
-      </div>
-    </div>
-
-  </div><!-- /sidebar -->
-
-  <!-- ╔═══ MAP ═══╗ -->
-  <div id="map">
-    <div id="mov">
-      <div class="ov" id="ovSaya" style="display:none">
-        <div class="ovl">📍 GPS Saya</div>
-        <div class="ovv" id="ovSayaV">—</div>
-        <div class="ovv" style="color:var(--mt);font-size:.6rem" id="ovSayaS">—</div>
-      </div>
-      <div class="ov" id="ovRute" style="display:none">
-        <div class="ovl">🧭 Navigasi</div>
-        <div class="ovv am" id="ovRuteNm">—</div>
-        <div class="ovv gr" style="font-size:.68rem" id="ovRuteInfo">—</div>
-      </div>
-      <div class="ov" id="ovMeasure" style="display:none">
-        <div class="ovl">📏 Pengukuran</div>
-        <div class="ovv" id="ovMeasureV">Aktif</div>
-      </div>
+<!-- RESET CONFIRM MODAL -->
+<div class="modal-overlay" id="resetModal">
+  <div class="modal">
+    <h3>⚠️ Reset Permainan</h3>
+    <p>Semua data akan dihapus: skor kemenangan, poin ronde, histori, dan nomor ronde. Tindakan ini tidak dapat dibatalkan.</p>
+    <div class="modal-actions">
+      <button class="btn" id="resetCancel">Batal</button>
+      <button class="btn primary" id="resetConfirm" style="background:var(--bad); color:#fff;">Reset Semua</button>
     </div>
   </div>
+</div>
 
-</div><!-- /app -->
-<div id="toast"></div>
+<!-- WIN BANNER -->
+<div class="win-banner" id="winBanner">
+  <div class="box">
+    <div class="trophy">🏆</div>
+    <p class="who" id="winWhoText">TIM 2 MENANG RONDE!</p>
+    <p class="plus">+1 SKOR</p>
+  </div>
+</div>
 
-<!-- ═══════════════ LEAFLET SCRIPTS ═══════════════ -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-routing-machine/3.2.12/leaflet-routing-machine.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
-<script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
-<script src="https://unpkg.com/leaflet.markercluster/dist/leaflet.markercluster.js"></script>
-<script src="https://unpkg.com/leaflet-minimap/dist/Control.MiniMap.min.js"></script>
-<script src="https://unpkg.com/leaflet.heat/dist/leaflet-heat.js"></script>
-<script src="https://unpkg.com/leaflet-measure/dist/leaflet-measure.js"></script>
+<script>
+(function(){
+  'use strict';
 
-<!-- ═══════════════ APP SCRIPT ═══════════════ -->
-<script type="module" src="app.js"></script>
+  var STORAGE_KEY = 'dominoMandanGame';
 
+  var defaultState = {
+    team1Name: 'Tim 1',
+    team2Name: 'Tim 2',
+    maxPoints: 10,
+    team1Wins: 0,
+    team2Wins: 0,
+    team1Points: 0,
+    team2Points: 0,
+    roundNumber: 1,
+    history: []
+  };
+
+  var state = loadState();
+
+  function loadState(){
+    try{
+      var raw = localStorage.getItem(STORAGE_KEY);
+      if(!raw) return JSON.parse(JSON.stringify(defaultState));
+      var parsed = JSON.parse(raw);
+      var merged = Object.assign({}, defaultState, parsed);
+      if(!Array.isArray(merged.history)) merged.history = [];
+      return merged;
+    }catch(e){
+      return JSON.parse(JSON.stringify(defaultState));
+    }
+  }
+
+  function saveState(){
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  }
+
+  // ---------- DOM refs ----------
+  var $ = function(id){ return document.getElementById(id); };
+
+  var winsName1 = $('winsName1'), winsName2 = $('winsName2');
+  var winsNum1 = $('winsNum1'), winsNum2 = $('winsNum2');
+  var colName1 = $('colName1'), colName2 = $('colName2');
+  var pointDisplay1 = $('pointDisplay1'), pointDisplay2 = $('pointDisplay2');
+  var turnInput1 = $('turnInput1'), turnInput2 = $('turnInput2');
+  var fill1 = $('fill1'), fill2 = $('fill2');
+  var pct1 = $('pct1'), pct2 = $('pct2');
+  var col1 = $('col1'), col2 = $('col2');
+  var roundLabel = $('roundLabel');
+  var maxLabel = $('maxLabel');
+  var statusText = $('statusText');
+  var statusPill = $('statusPill');
+  var historyList = $('historyList');
+  var historyCount = $('historyCount');
+  var pipsBox = $('pipsBox');
+
+  // ---------- render ----------
+  function render(){
+    winsName1.textContent = state.team1Name;
+    winsName2.textContent = state.team2Name;
+    winsNum1.textContent = state.team1Wins;
+    winsNum2.textContent = state.team2Wins;
+    colName1.textContent = state.team1Name;
+    colName2.textContent = state.team2Name;
+    maxLabel.textContent = state.maxPoints;
+    roundLabel.textContent = 'Ronde ' + state.roundNumber;
+
+    pointDisplay1.textContent = state.team1Points;
+    pointDisplay2.textContent = state.team2Points;
+
+    var p1 = Math.max(0, Math.round((state.team1Points / state.maxPoints) * 100));
+    var p2 = Math.max(0, Math.round((state.team2Points / state.maxPoints) * 100));
+    fill1.style.width = Math.min(p1,100) + '%';
+    fill2.style.width = Math.min(p2,100) + '%';
+    pct1.textContent = p1 + '%';
+    pct2.textContent = p2 + '%';
+
+    col1.classList.toggle('leading', state.team1Points > state.team2Points);
+    col2.classList.toggle('leading', state.team2Points > state.team1Points);
+
+    var reached = state.team1Points >= state.maxPoints || state.team2Points >= state.maxPoints;
+    if(reached){
+      statusText.textContent = 'RONDE SELESAI — MENYIMPAN OTOMATIS…';
+      statusPill.querySelector('.dot').style.background = 'var(--gold)';
+    }else{
+      statusText.textContent = 'RONDE BERLANGSUNG';
+      statusPill.querySelector('.dot').style.background = 'var(--good)';
+    }
+
+    renderPips();
+    renderHistory();
+    saveState();
+  }
+
+  function renderPips(){
+    // decorative pip pattern based on round number mod 6 (like a domino face)
+    var n = ((state.roundNumber - 1) % 6) + 1;
+    var patterns = {
+      1:[4], 2:[0,8], 3:[0,4,8], 4:[0,2,6,8], 5:[0,2,4,6,8], 6:[0,2,3,5,6,8]
+    };
+    var on = patterns[n];
+    pipsBox.innerHTML = '';
+    for(var i=0;i<9;i++){
+      var el = document.createElement('i');
+      if(on.indexOf(i) !== -1) el.className = 'on';
+      pipsBox.appendChild(el);
+    }
+  }
+
+  function renderHistory(){
+    historyCount.textContent = state.history.length + ' ronde';
+    if(state.history.length === 0){
+      historyList.innerHTML = '<div class="history-empty">Belum ada ronde yang selesai.</div>';
+      return;
+    }
+    var rows = state.history.slice().reverse().map(function(h){
+      var t1win = h.winner === 'team1';
+      return '<div class="h-row">' +
+        '<div class="h-round">#' + h.round + '</div>' +
+        '<div class="h-team ' + (t1win ? 'win':'') + '"><span class="n">' + escapeHtml(h.team1Name) + '</span><span class="p">' + h.team1Points + '</span></div>' +
+        '<div class="h-team ' + (!t1win ? 'win':'') + '"><span class="n">' + escapeHtml(h.team2Name) + '</span><span class="p">' + h.team2Points + '</span></div>' +
+        '<div class="h-tag">' + h.team1WinsAfter + ' — ' + h.team2WinsAfter + '</div>' +
+        '</div>';
+    }).join('');
+    historyList.innerHTML = rows;
+  }
+
+  function escapeHtml(s){
+    var d = document.createElement('div');
+    d.textContent = s;
+    return d.innerHTML;
+  }
+
+  // ---------- point controls ----------
+  function adjustPoint(team, delta){
+    var key = team === 1 ? 'team1Points' : 'team2Points';
+    var val = state[key] + delta;
+    if(val < 0) val = 0;
+    state[key] = val;
+    render();
+    checkAutoFinish();
+  }
+
+  document.querySelectorAll('.step-btn, .quick-btn').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var team = parseInt(btn.getAttribute('data-team'), 10);
+      if(btn.hasAttribute('data-reset')){
+        state[team === 1 ? 'team1Points' : 'team2Points'] = 0;
+        render();
+        return;
+      }
+      var delta = parseInt(btn.getAttribute('data-delta'), 10);
+      adjustPoint(team, delta);
+    });
+  });
+
+  function addTurnPoint(team){
+    var input = team === 1 ? turnInput1 : turnInput2;
+    var raw = input.value;
+    var v = parseInt(raw, 10);
+    if(raw === '' || isNaN(v) || v < 0){
+      showToast('Masukkan angka poin putaran yang valid.');
+      return;
+    }
+    var key = team === 1 ? 'team1Points' : 'team2Points';
+    state[key] += v;
+    input.value = '';
+    render();
+    checkAutoFinish();
+    input.focus();
+  }
+
+  $('turnOk1').addEventListener('click', function(){ addTurnPoint(1); });
+  $('turnOk2').addEventListener('click', function(){ addTurnPoint(2); });
+
+  turnInput1.addEventListener('keydown', function(e){ if(e.key === 'Enter'){ e.preventDefault(); addTurnPoint(1); } });
+  turnInput2.addEventListener('keydown', function(e){ if(e.key === 'Enter'){ e.preventDefault(); addTurnPoint(2); } });
+
+  // ---------- toast ----------
+  function showToast(msg, isWin){
+    var wrap = $('toastWrap');
+    var t = document.createElement('div');
+    t.className = 'toast' + (isWin ? ' win-toast' : '');
+    t.textContent = msg;
+    wrap.appendChild(t);
+    setTimeout(function(){
+      t.classList.add('leaving');
+      setTimeout(function(){ t.remove(); }, 200);
+    }, 2600);
+  }
+
+  // ---------- auto-finish round ----------
+  var finishing = false;
+
+  function checkAutoFinish(){
+    if(finishing) return;
+    var p1 = state.team1Points, p2 = state.team2Points, max = state.maxPoints;
+    if(p1 < max && p2 < max) return;
+
+    finishing = true;
+    // brief pause so the number that crossed the line is visible before the round resets
+    setTimeout(finishRoundAuto, 550);
+  }
+
+  function finishRoundAuto(){
+    var p1 = state.team1Points, p2 = state.team2Points, max = state.maxPoints;
+    var t1over = p1 >= max, t2over = p2 >= max;
+
+    if(!t1over && !t2over){ finishing = false; return; }
+
+    // if both crossed at once, the team with more points loses (tie stays with team1 losing)
+    var t1Loses = (t1over && t2over) ? (p1 >= p2) : t1over;
+    var winnerKey = t1Loses ? 'team2' : 'team1';
+    var t1win = winnerKey === 'team1';
+
+    var record = {
+      round: state.roundNumber,
+      team1Name: state.team1Name,
+      team1Points: p1,
+      team2Name: state.team2Name,
+      team2Points: p2,
+      winner: winnerKey,
+      loser: t1win ? 'team2' : 'team1'
+    };
+
+    if(t1win){ state.team1Wins += 1; } else { state.team2Wins += 1; }
+    record.team1WinsAfter = state.team1Wins;
+    record.team2WinsAfter = state.team2Wins;
+
+    state.history.push(record);
+    state.team1Points = 0;
+    state.team2Points = 0;
+    state.roundNumber += 1;
+
+    render();
+    finishing = false;
+
+    var winName = t1win ? state.team1Name : state.team2Name;
+    $('winWhoText').textContent = '🏆 ' + winName.toUpperCase() + ' MENANG RONDE!';
+    var banner = $('winBanner');
+    banner.classList.add('show');
+    setTimeout(function(){ banner.classList.remove('show'); }, 1800);
+    showToast('Ronde ' + record.round + ' disimpan otomatis · ' + winName + ' +1 skor', true);
+  }
+
+  // ---------- undo ----------
+  var undoModal = $('undoModal');
+  $('undoBtn').addEventListener('click', function(){
+    if(state.history.length === 0){
+      showToast('Belum ada ronde untuk di-undo.');
+      return;
+    }
+    undoModal.classList.add('open');
+  });
+  $('undoCancel').addEventListener('click', function(){ undoModal.classList.remove('open'); });
+  undoModal.addEventListener('click', function(e){ if(e.target === undoModal) undoModal.classList.remove('open'); });
+
+  $('undoConfirm').addEventListener('click', function(){
+    var last = state.history.pop();
+    if(last){
+      if(last.winner === 'team1'){ state.team1Wins = Math.max(0, state.team1Wins - 1); }
+      else { state.team2Wins = Math.max(0, state.team2Wins - 1); }
+      state.roundNumber = last.round;
+      state.team1Points = 0;
+      state.team2Points = 0;
+    }
+    undoModal.classList.remove('open');
+    render();
+    showToast('Ronde terakhir dibatalkan.');
+  });
+
+  // ---------- reset ----------
+  var resetModal = $('resetModal');
+  $('resetBtn').addEventListener('click', function(){ resetModal.classList.add('open'); });
+  $('resetCancel').addEventListener('click', function(){ resetModal.classList.remove('open'); });
+  resetModal.addEventListener('click', function(e){ if(e.target === resetModal) resetModal.classList.remove('open'); });
+
+  $('resetConfirm').addEventListener('click', function(){
+    state.team1Wins = 0;
+    state.team2Wins = 0;
+    state.team1Points = 0;
+    state.team2Points = 0;
+    state.roundNumber = 1;
+    state.history = [];
+    resetModal.classList.remove('open');
+    render();
+    showToast('Permainan telah direset.');
+  });
+
+  // ---------- settings ----------
+  var settingsCard = $('settingsCard');
+  $('settingsBtn').addEventListener('click', function(){
+    $('inputTeam1').value = state.team1Name;
+    $('inputTeam2').value = state.team2Name;
+    $('inputMax').value = state.maxPoints;
+    settingsCard.classList.toggle('open');
+    if(settingsCard.classList.contains('open')){
+      setTimeout(function(){
+        settingsCard.scrollIntoView({behavior:'smooth', block:'start'});
+      }, 60);
+    }
+  });
+  $('cancelSettings').addEventListener('click', function(){ settingsCard.classList.remove('open'); });
+
+  $('saveSettings').addEventListener('click', function(){
+    var n1 = $('inputTeam1').value.trim();
+    var n2 = $('inputTeam2').value.trim();
+    var max = parseInt($('inputMax').value, 10);
+
+    if(n1) state.team1Name = n1;
+    if(n2) state.team2Name = n2;
+    if(!isNaN(max) && max > 0) state.maxPoints = max;
+    else showToast('Poin maksimum harus lebih besar dari 0.');
+
+    settingsCard.classList.remove('open');
+    render();
+    checkAutoFinish();
+    showToast('Pengaturan disimpan.');
+  });
+
+  // ---------- fullscreen ----------
+  $('fullscreenBtn').addEventListener('click', function(){
+    if(!document.fullscreenElement){
+      document.documentElement.requestFullscreen().catch(function(){});
+    }else{
+      document.exitFullscreen();
+    }
+  });
+
+  // ---------- init ----------
+  render();
+})();
+</script>
 </body>
 </html>
