@@ -166,13 +166,13 @@
   }
   .turn-input::-webkit-outer-spin-button, .turn-input::-webkit-inner-spin-button{-webkit-appearance:none; margin:0;}
   .turn-input:focus{border-color:var(--gold);}
-  .turn-ok{
-    border:none; border-radius:9px; padding:10px 16px; font-weight:800; font-size:13px;
-    color:#fff; cursor:pointer; white-space:nowrap; flex-shrink:0;
+  .shared-ok-btn{
+    width:100%; margin-top:14px; border:none; border-radius:12px; padding:14px;
+    font-family:'Inter'; font-weight:800; font-size:15px; letter-spacing:.02em;
+    color:#1a1206; background:var(--gold); cursor:pointer;
+    box-shadow:0 6px 18px rgba(212,167,60,0.25);
   }
-  .team-col.t1 .turn-ok{background:var(--t1);}
-  .team-col.t2 .turn-ok{background:var(--t2);}
-  .turn-ok:active{transform:scale(.93);}
+  .shared-ok-btn:active{transform:scale(.97);}
 
   .col-divider{width:32px; height:1.5px; background:var(--line); border-radius:2px; margin:2px 0;}
 
@@ -410,7 +410,6 @@
           <span class="mini-label">Poin Putaran Ini</span>
           <div class="turn-row">
             <input class="turn-input" id="turnInput1" type="number" inputmode="numeric" min="0" placeholder="0">
-            <button class="turn-ok" data-team="1" id="turnOk1">OK</button>
           </div>
         </div>
         <div class="controls-row">
@@ -433,7 +432,6 @@
           <span class="mini-label">Poin Putaran Ini</span>
           <div class="turn-row">
             <input class="turn-input" id="turnInput2" type="number" inputmode="numeric" min="0" placeholder="0">
-            <button class="turn-ok" data-team="2" id="turnOk2">OK</button>
           </div>
         </div>
         <div class="controls-row">
@@ -446,6 +444,8 @@
         </div>
       </div>
     </div>
+
+    <button class="shared-ok-btn" id="sharedTurnOk">✓ OK — Tambah Poin</button>
 
     <div class="util-row">
       <button class="util-btn" id="undoBtn">↺ Undo Ronde Terakhir</button>
@@ -575,10 +575,20 @@
     col1.classList.toggle('leading', state.team1Points > state.team2Points);
     col2.classList.toggle('leading', state.team2Points > state.team1Points);
 
-    var reached = state.team1Points >= state.maxPoints || state.team2Points >= state.maxPoints;
+    // A round only actually "finishes" if someone is over max AND not tied with the
+    // other team's score. If both cross max at the same value, play continues
+    // (sudden-death) until one team pulls strictly ahead — that team then loses.
+    var t1over = state.team1Points >= state.maxPoints;
+    var t2over = state.team2Points >= state.maxPoints;
+    var tiedOver = t1over && t2over && state.team1Points === state.team2Points;
+    var reached = (t1over || t2over) && !tiedOver;
+
     if(reached){
       statusText.textContent = 'RONDE SELESAI — MENYIMPAN OTOMATIS…';
       statusPill.querySelector('.dot').style.background = 'var(--gold)';
+    }else if(tiedOver){
+      statusText.textContent = 'SKOR SAMA DI ATAS MAKS — LANJUT TERUS!';
+      statusPill.querySelector('.dot').style.background = 'var(--t2)';
     }else{
       statusText.textContent = 'RONDE BERLANGSUNG';
       statusPill.querySelector('.dot').style.background = 'var(--good)';
@@ -651,27 +661,43 @@
     });
   });
 
-  function addTurnPoint(team){
-    var input = team === 1 ? turnInput1 : turnInput2;
-    var raw = input.value;
-    var v = parseInt(raw, 10);
-    if(raw === '' || isNaN(v) || v < 0){
-      showToast('Masukkan angka poin putaran yang valid.');
+  function submitTurnPoints(){
+    var raw1 = turnInput1.value;
+    var raw2 = turnInput2.value;
+    var has1 = raw1 !== '';
+    var has2 = raw2 !== '';
+
+    if(!has1 && !has2){
+      showToast('Isi poin putaran Tim 1 dan/atau Tim 2 dulu.');
       return;
     }
-    var key = team === 1 ? 'team1Points' : 'team2Points';
-    state[key] += v;
-    input.value = '';
+
+    var v1 = parseInt(raw1, 10);
+    var v2 = parseInt(raw2, 10);
+
+    if(has1 && (isNaN(v1) || v1 < 0)){
+      showToast('Poin ' + state.team1Name + ' tidak valid.');
+      return;
+    }
+    if(has2 && (isNaN(v2) || v2 < 0)){
+      showToast('Poin ' + state.team2Name + ' tidak valid.');
+      return;
+    }
+
+    if(has1) state.team1Points += v1;
+    if(has2) state.team2Points += v2;
+
+    turnInput1.value = '';
+    turnInput2.value = '';
+
     render();
     checkAutoFinish();
-    input.focus();
   }
 
-  $('turnOk1').addEventListener('click', function(){ addTurnPoint(1); });
-  $('turnOk2').addEventListener('click', function(){ addTurnPoint(2); });
+  $('sharedTurnOk').addEventListener('click', submitTurnPoints);
 
-  turnInput1.addEventListener('keydown', function(e){ if(e.key === 'Enter'){ e.preventDefault(); addTurnPoint(1); } });
-  turnInput2.addEventListener('keydown', function(e){ if(e.key === 'Enter'){ e.preventDefault(); addTurnPoint(2); } });
+  turnInput1.addEventListener('keydown', function(e){ if(e.key === 'Enter'){ e.preventDefault(); submitTurnPoints(); } });
+  turnInput2.addEventListener('keydown', function(e){ if(e.key === 'Enter'){ e.preventDefault(); submitTurnPoints(); } });
 
   // ---------- toast ----------
   function showToast(msg, isWin){
@@ -692,7 +718,13 @@
   function checkAutoFinish(){
     if(finishing) return;
     var p1 = state.team1Points, p2 = state.team2Points, max = state.maxPoints;
-    if(p1 < max && p2 < max) return;
+    var t1over = p1 >= max, t2over = p2 >= max;
+
+    if(!t1over && !t2over) return;
+
+    // Sudden-death rule: if both teams are over max AT THE SAME SCORE, the round
+    // does NOT end yet — play continues until one team is strictly ahead.
+    if(t1over && t2over && p1 === p2) return;
 
     finishing = true;
     // brief pause so the number that crossed the line is visible before the round resets
@@ -705,8 +737,12 @@
 
     if(!t1over && !t2over){ finishing = false; return; }
 
-    // if both crossed at once, the team with more points loses (tie stays with team1 losing)
-    var t1Loses = (t1over && t2over) ? (p1 >= p2) : t1over;
+    // safety net — should not normally reach here since checkAutoFinish already blocks this case
+    if(t1over && t2over && p1 === p2){ finishing = false; return; }
+
+    // If both crossed max, whoever has the HIGHER score loses (the other wins).
+    // If only one crossed max, that team loses.
+    var t1Loses = (t1over && t2over) ? (p1 > p2) : t1over;
     var winnerKey = t1Loses ? 'team2' : 'team1';
     var t1win = winnerKey === 'team1';
 
@@ -830,3 +866,4 @@
 </script>
 </body>
 </html>
+
