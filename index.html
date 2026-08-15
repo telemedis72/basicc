@@ -174,6 +174,15 @@
   }
   .shared-ok-btn:active{transform:scale(.97);}
 
+  .undo-turn-btn{
+    width:100%; margin-top:8px; border:1px solid var(--line); border-radius:12px; padding:11px;
+    font-family:'Inter'; font-weight:700; font-size:13px; color:var(--ink-dim); background:var(--bg-raise);
+    cursor:pointer; transition:.15s;
+  }
+  .undo-turn-btn:disabled{opacity:.4; cursor:not-allowed;}
+  .undo-turn-btn:not(:disabled){color:var(--bad); border-color:rgba(193,68,60,0.32);}
+  .undo-turn-btn:not(:disabled):active{transform:scale(.97);}
+
   .col-divider{width:32px; height:1.5px; background:var(--line); border-radius:2px; margin:2px 0;}
 
   .controls-row{display:flex; align-items:center; justify-content:center; gap:6px; width:100%;}
@@ -446,6 +455,7 @@
     </div>
 
     <button class="shared-ok-btn" id="sharedTurnOk">✓ OK — Tambah Poin</button>
+    <button class="undo-turn-btn" id="undoTurnBtn" disabled>↩ Batalkan Poin Terakhir</button>
 
     <div class="util-row">
       <button class="util-btn" id="undoBtn">↺ Undo Ronde Terakhir</button>
@@ -651,6 +661,8 @@
   document.querySelectorAll('.step-btn, .quick-btn').forEach(function(btn){
     btn.addEventListener('click', function(){
       var team = parseInt(btn.getAttribute('data-team'), 10);
+      lastTurnAdd = null;
+      updateUndoTurnBtnState();
       if(btn.hasAttribute('data-reset')){
         state[team === 1 ? 'team1Points' : 'team2Points'] = 0;
         render();
@@ -687,6 +699,9 @@
     if(has1) state.team1Points += v1;
     if(has2) state.team2Points += v2;
 
+    lastTurnAdd = { t1: has1 ? v1 : 0, t2: has2 ? v2 : 0 };
+    updateUndoTurnBtnState();
+
     turnInput1.value = '';
     turnInput2.value = '';
 
@@ -695,6 +710,16 @@
   }
 
   $('sharedTurnOk').addEventListener('click', submitTurnPoints);
+
+  $('undoTurnBtn').addEventListener('click', function(){
+    if(!lastTurnAdd) return;
+    state.team1Points = Math.max(0, state.team1Points - lastTurnAdd.t1);
+    state.team2Points = Math.max(0, state.team2Points - lastTurnAdd.t2);
+    lastTurnAdd = null;
+    updateUndoTurnBtnState();
+    render();
+    showToast('Poin terakhir dibatalkan.');
+  });
 
   turnInput1.addEventListener('keydown', function(e){ if(e.key === 'Enter'){ e.preventDefault(); submitTurnPoints(); } });
   turnInput2.addEventListener('keydown', function(e){ if(e.key === 'Enter'){ e.preventDefault(); submitTurnPoints(); } });
@@ -714,6 +739,12 @@
 
   // ---------- auto-finish round ----------
   var finishing = false;
+  var lastTurnAdd = null; // {t1, t2} — the most recent points added via the shared OK button, so a mistaken entry can be undone
+
+  function updateUndoTurnBtnState(){
+    var btn = $('undoTurnBtn');
+    if(btn) btn.disabled = !lastTurnAdd;
+  }
 
   function checkAutoFinish(){
     if(finishing) return;
@@ -764,6 +795,8 @@
     state.team1Points = 0;
     state.team2Points = 0;
     state.roundNumber += 1;
+    lastTurnAdd = null;
+    updateUndoTurnBtnState();
 
     render();
     finishing = false;
@@ -797,6 +830,8 @@
       state.team1Points = 0;
       state.team2Points = 0;
     }
+    lastTurnAdd = null;
+    updateUndoTurnBtnState();
     undoModal.classList.remove('open');
     render();
     showToast('Ronde terakhir dibatalkan.');
@@ -815,6 +850,8 @@
     state.team2Points = 0;
     state.roundNumber = 1;
     state.history = [];
+    lastTurnAdd = null;
+    updateUndoTurnBtnState();
     resetModal.classList.remove('open');
     render();
     showToast('Permainan telah direset.');
@@ -866,4 +903,3 @@
 </script>
 </body>
 </html>
-
