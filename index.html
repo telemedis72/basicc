@@ -151,6 +151,8 @@
   .lb-name{font-weight:700; font-size:14.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
   .lb-row.leader .lb-name::before{content:"👑 "; font-size:12px;}
   .lb-score{font-family:'Barlow Condensed'; font-weight:800; font-size:28px; color:var(--ink);}
+  .lb-score.profit{color:var(--good);}
+  .lb-score.loss{color:var(--bad);}
   .lb-row.leader .lb-score{color:var(--gold); text-shadow:0 0 20px var(--p3-glow);}
 
   /* ---------- round card ---------- */
@@ -914,19 +916,37 @@
     renderPips(pipsBoxIndividual, state.individualRound);
   }
 
+  function netBalance(i){
+    var net = 0;
+    for(var j=0;j<4;j++){
+      if(j === i) continue;
+      net += state.payMatrix[j][i] - state.payMatrix[i][j]; // received minus paid
+    }
+    return net;
+  }
+
   function renderLeaderboard(){
+    var isBayar = state.individualSubMode === 'bayar';
+
     var rows = state.playerNames.map(function(name, i){
-      return { name: name, score: state.playerPoints[i] };
+      return { name: name, score: isBayar ? netBalance(i) : state.playerPoints[i] };
     });
     var maxScore = Math.max.apply(null, rows.map(function(r){ return r.score; }));
     rows.sort(function(a,b){ return b.score - a.score; });
 
     var html = rows.map(function(r, idx){
-      var isLeader = r.score === maxScore && maxScore > 0;
+      var isLeader = isBayar ? (r.score === maxScore && maxScore > 0) : (r.score === maxScore && maxScore > 0);
+      var scoreClass = '';
+      var scoreText = r.score;
+      if(isBayar){
+        if(r.score > 0){ scoreClass = ' profit'; scoreText = '+' + formatRupiah(r.score); }
+        else if(r.score < 0){ scoreClass = ' loss'; scoreText = '−' + formatRupiah(-r.score); }
+        else { scoreText = formatRupiah(0); }
+      }
       return '<div class="lb-row' + (isLeader ? ' leader' : '') + '">' +
         '<div class="lb-rank">' + (idx+1) + '</div>' +
         '<div class="lb-name">' + escapeHtml(r.name) + '</div>' +
-        '<div class="lb-score">' + r.score + '</div>' +
+        '<div class="lb-score' + scoreClass + '">' + scoreText + '</div>' +
         '</div>';
     }).join('');
     $('leaderboardList').innerHTML = html;
