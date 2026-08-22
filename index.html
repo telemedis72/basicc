@@ -25,6 +25,14 @@
     --t2-dim: #3c2321;
     --t2-glow: rgba(193,68,60,0.35);
 
+    --p3: #d4a73c;
+    --p3-dim: #4a3d1a;
+    --p3-glow: rgba(212,167,60,0.35);
+
+    --p4: #4a9d6e;
+    --p4-dim: #1f3a2c;
+    --p4-glow: rgba(74,157,110,0.35);
+
     --gold: #d4a73c;
     --good: #4a9d6e;
     --bad: #c1443c;
@@ -91,6 +99,13 @@
   .status-pill .dot{width:7px; height:7px; border-radius:50%; background:var(--good); box-shadow:0 0 0 3px rgba(74,157,110,0.2); animation:pulse 1.8s infinite;}
   @keyframes pulse{0%,100%{opacity:1;} 50%{opacity:.4;}}
 
+  .mode-pill{
+    font-family:'Inter'; font-weight:700; font-size:11px; letter-spacing:.1em; text-transform:uppercase;
+    color:var(--gold); background:var(--t1-dim); border:1px solid var(--line);
+    padding:6px 13px; border-radius:999px;
+  }
+  .status-row{display:flex; justify-content:center; align-items:center; gap:8px; margin:10px 0 4px; flex-wrap:wrap;}
+
   /* ---------- wins board ---------- */
   .wins-board{
     background:linear-gradient(180deg, var(--card-2), var(--card));
@@ -119,6 +134,25 @@
     letter-spacing:.05em; padding:0 6px;
   }
 
+  /* ---------- leaderboard (individual mode) ---------- */
+  .leaderboard-board{
+    background:linear-gradient(180deg, var(--card-2), var(--card));
+    border:1px solid var(--line); border-radius:var(--radius);
+    box-shadow:var(--shadow);
+    padding:14px; margin-top:14px;
+  }
+  .lb-row{
+    display:grid; grid-template-columns:28px 1fr auto; align-items:center; gap:10px;
+    padding:10px 6px; border-bottom:1px solid var(--line);
+  }
+  .lb-row:last-child{border-bottom:none;}
+  .lb-rank{font-family:'Barlow Condensed'; font-weight:800; font-size:18px; color:var(--ink-faint); text-align:center;}
+  .lb-row.leader .lb-rank{color:var(--gold);}
+  .lb-name{font-weight:700; font-size:14.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .lb-row.leader .lb-name::before{content:"👑 "; font-size:12px;}
+  .lb-score{font-family:'Barlow Condensed'; font-weight:800; font-size:28px; color:var(--ink);}
+  .lb-row.leader .lb-score{color:var(--gold); text-shadow:0 0 20px var(--p3-glow);}
+
   /* ---------- round card ---------- */
   .round-card{
     background:var(--card); border:1px solid var(--line); border-radius:var(--radius);
@@ -132,6 +166,8 @@
   .round-title .maxinfo{font-size:12px; color:var(--ink-faint); font-weight:600;}
 
   .teams-cols{display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:10px;}
+  .players-grid{display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:10px;}
+
   .team-col{
     background:var(--bg-raise); border-radius:var(--radius-sm); padding:16px 12px; border:1.5px solid var(--line);
     display:flex; flex-direction:column; align-items:center; gap:9px; position:relative;
@@ -139,8 +175,12 @@
   }
   .team-col.t1{border-color:var(--t1-dim);}
   .team-col.t2{border-color:var(--t2-dim);}
+  .team-col.p3{border-color:var(--p3-dim);}
+  .team-col.p4{border-color:var(--p4-dim);}
   .team-col.leading.t1{border-color:var(--t1); box-shadow:0 0 0 1px var(--t1) inset;}
   .team-col.leading.t2{border-color:var(--t2); box-shadow:0 0 0 1px var(--t2) inset;}
+  .team-col.leading.p3{border-color:var(--p3); box-shadow:0 0 0 1px var(--p3) inset;}
+  .team-col.leading.p4{border-color:var(--p4); box-shadow:0 0 0 1px var(--p4) inset;}
 
   .team-col .tname{
     font-weight:700; font-size:13px; text-align:center; color:var(--ink);
@@ -148,11 +188,14 @@
   }
   .team-col.t1 .tname{color:var(--t1);}
   .team-col.t2 .tname{color:var(--t2);}
+  .team-col.p3 .tname{color:var(--p3);}
+  .team-col.p4 .tname{color:var(--p4);}
 
   .point-display{
     font-family:'Barlow Condensed'; font-weight:800; font-size:56px; line-height:1;
     color:var(--ink); margin-top:2px;
   }
+  .players-grid .point-display{font-size:44px;}
   .mini-label{
     font-size:10px; font-weight:700; letter-spacing:.09em; text-transform:uppercase;
     color:var(--ink-faint); margin:2px 0 -2px;
@@ -194,6 +237,8 @@
   }
   .team-col.t1 .step-btn{background:var(--t1);}
   .team-col.t2 .step-btn{background:var(--t2);}
+  .team-col.p3 .step-btn{background:var(--p3); color:#1a1206;}
+  .team-col.p4 .step-btn{background:var(--p4);}
   .step-btn:active{transform:scale(.9);}
   .step-btn.minus{opacity:.85;}
 
@@ -202,6 +247,22 @@
     font-size:12px; font-weight:700; padding:0; height:36px; border-radius:10px; cursor:pointer;
   }
   .quick-btn:active{transform:scale(.93);}
+
+  .win-btn{
+    width:100%; border:none; border-radius:12px; padding:15px 8px; margin-top:4px;
+    font-family:'Inter'; font-weight:800; font-size:14px; letter-spacing:.01em; color:#fff; cursor:pointer;
+    display:flex; align-items:center; justify-content:center; gap:6px; transition:.12s;
+  }
+  .team-col.t1 .win-btn{background:var(--t1);}
+  .team-col.t2 .win-btn{background:var(--t2);}
+  .team-col.p3 .win-btn{background:var(--p3); color:#1a1206;}
+  .team-col.p4 .win-btn{background:var(--p4);}
+  .win-btn:active{transform:scale(.95);}
+  .correction-btn{
+    width:100%; border:1px solid var(--line); background:var(--card); color:var(--ink-faint);
+    font-size:11px; font-weight:700; padding:7px; border-radius:9px; cursor:pointer; margin-top:2px;
+  }
+  .correction-btn:active{transform:scale(.95);}
 
   .progress-track{width:100%; height:7px; background:var(--line); border-radius:99px; overflow:hidden;}
   .progress-fill{height:100%; border-radius:99px; transition:width .35s ease;}
@@ -243,6 +304,17 @@
   .btn.primary{background:var(--gold); color:#1a1206; border:none;}
   .btn:active{transform:scale(.97);}
 
+  .mode-toggle{display:flex; gap:8px; margin-bottom:14px;}
+  .mode-toggle-btn{
+    flex:1; padding:12px; border-radius:11px; border:1.5px solid var(--line); cursor:pointer;
+    font-weight:700; font-size:13px; font-family:'Inter'; background:var(--bg-raise); color:var(--ink-dim);
+    text-align:center;
+  }
+  .mode-toggle-btn.active{border-color:var(--gold); color:var(--gold); background:var(--t1-dim);}
+  .mode-toggle-btn:active{transform:scale(.97);}
+  .field-group{display:none;}
+  .field-group.active{display:block;}
+
   /* ---------- history ---------- */
   .history-card{
     background:var(--card); border:1px solid var(--line); border-radius:var(--radius);
@@ -271,6 +343,17 @@
     font-size:9.5px; font-weight:800; letter-spacing:.06em; text-align:right; color:var(--ink-faint);
     text-transform:uppercase;
   }
+  .hi-row{
+    display:grid; grid-template-columns:30px repeat(4, 1fr); gap:6px; align-items:center;
+    padding:10px 4px; border-bottom:1px solid var(--line); font-size:12px;
+  }
+  .hi-row:last-child{border-bottom:none;}
+  .hi-round{font-family:'Barlow Condensed'; font-weight:800; font-size:15px; color:var(--ink-faint); text-align:center;}
+  .hi-p{display:flex; flex-direction:column; align-items:center; gap:1px; min-width:0;}
+  .hi-p .n{font-weight:700; font-size:10px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%; color:var(--ink-faint);}
+  .hi-p .add{font-size:11px; font-weight:700; color:var(--ink-dim);}
+  .hi-p.top .add{color:var(--gold);}
+  .hi-p .tot{font-size:13px; font-weight:800; font-family:'Barlow Condensed'; color:var(--ink);}
 
   /* ---------- modal ---------- */
   .modal-overlay{
@@ -334,6 +417,7 @@
   @media(min-width:640px){
     .wins-num{font-size:92px;}
     .point-display{font-size:66px;}
+    .players-grid .point-display{font-size:52px;}
   }
 </style>
 </head>
@@ -354,33 +438,62 @@
 
 <main>
 
-  <div class="status-wrap">
+  <div class="status-row">
     <div class="status-pill" id="statusPill"><span class="dot"></span><span id="statusText">RONDE BERLANGSUNG</span></div>
+    <div class="mode-pill" id="modePill">2 TIM</div>
   </div>
 
   <!-- SETTINGS -->
   <section class="settings-card" id="settingsCard">
     <h3>Pengaturan Permainan</h3>
-    <div class="field">
-      <label>Nama Tim 1</label>
-      <input type="text" id="inputTeam1" maxlength="24">
+
+    <div class="mode-toggle">
+      <div class="mode-toggle-btn" id="modeBtnTeam" data-mode="team">👥 2 Tim</div>
+      <div class="mode-toggle-btn" id="modeBtnIndividual" data-mode="individual">🀱 4 Pemain</div>
     </div>
-    <div class="field">
-      <label>Nama Tim 2</label>
-      <input type="text" id="inputTeam2" maxlength="24">
+
+    <div class="field-group" id="fieldGroupTeam">
+      <div class="field">
+        <label>Nama Tim 1</label>
+        <input type="text" id="inputTeam1" maxlength="24">
+      </div>
+      <div class="field">
+        <label>Nama Tim 2</label>
+        <input type="text" id="inputTeam2" maxlength="24">
+      </div>
+      <div class="field">
+        <label>Poin Maksimum Ronde</label>
+        <input type="number" id="inputMax" min="1">
+      </div>
     </div>
-    <div class="field">
-      <label>Poin Maksimum Ronde</label>
-      <input type="number" id="inputMax" min="1">
+
+    <div class="field-group" id="fieldGroupIndividual">
+      <div class="field">
+        <label>Nama Pemain 1</label>
+        <input type="text" id="inputPlayer1" maxlength="24">
+      </div>
+      <div class="field">
+        <label>Nama Pemain 2</label>
+        <input type="text" id="inputPlayer2" maxlength="24">
+      </div>
+      <div class="field">
+        <label>Nama Pemain 3</label>
+        <input type="text" id="inputPlayer3" maxlength="24">
+      </div>
+      <div class="field">
+        <label>Nama Pemain 4</label>
+        <input type="text" id="inputPlayer4" maxlength="24">
+      </div>
     </div>
+
     <div class="settings-actions">
       <button class="btn" id="cancelSettings">Tutup</button>
       <button class="btn primary" id="saveSettings">Simpan</button>
     </div>
   </section>
 
-  <!-- WINS BOARD -->
-  <section class="wins-board">
+  <!-- WINS BOARD (mode tim) -->
+  <section class="wins-board" id="teamWinsBoard">
     <div class="wins-grid">
       <div class="wins-side t1">
         <div class="team-name" id="winsName1">Tim 1</div>
@@ -401,14 +514,24 @@
     </div>
   </section>
 
+  <!-- LEADERBOARD (mode individu) -->
+  <section class="leaderboard-board" id="individualLeaderboard" style="display:none">
+    <div id="leaderboardList"></div>
+    <div class="pip-row">
+      <div class="line"></div>
+      <div class="pips" id="pipsBoxIndividual"></div>
+      <div class="line"></div>
+    </div>
+  </section>
+
   <!-- ROUND CARD -->
   <section class="round-card">
     <div class="round-title">
       <h2 id="roundLabel">Ronde 1</h2>
-      <span class="maxinfo">Poin Maks: <b id="maxLabel">10</b></span>
+      <span class="maxinfo" id="maxInfoWrap">Poin Maks: <b id="maxLabel">10</b></span>
     </div>
 
-    <div class="teams-cols">
+    <div class="teams-cols" id="teamsCols">
       <div class="team-col t1" id="col1">
         <div class="tname" id="colName1">Tim 1</div>
         <div class="point-display" id="pointDisplay1">0</div>
@@ -454,6 +577,8 @@
       </div>
     </div>
 
+    <div class="players-grid" id="playersGrid" style="display:none"></div>
+
     <button class="shared-ok-btn" id="sharedTurnOk">✓ OK — Tambah Poin</button>
     <button class="undo-turn-btn" id="undoTurnBtn" disabled>↩ Batalkan Poin Terakhir</button>
 
@@ -476,7 +601,7 @@
 <div class="modal-overlay" id="undoModal">
   <div class="modal">
     <h3>Undo Ronde Terakhir?</h3>
-    <p>Ronde terakhir akan dihapus dari histori dan skor kemenangan akan dikembalikan.</p>
+    <p id="undoModalText">Ronde terakhir akan dihapus dari histori dan skor kemenangan akan dikembalikan.</p>
     <div class="modal-actions">
       <button class="btn" id="undoCancel">Batal</button>
       <button class="btn primary" id="undoConfirm">Ya, Undo</button>
@@ -488,7 +613,7 @@
 <div class="modal-overlay" id="resetModal">
   <div class="modal">
     <h3>⚠️ Reset Permainan</h3>
-    <p>Semua data akan dihapus: skor kemenangan, poin ronde, histori, dan nomor ronde. Tindakan ini tidak dapat dibatalkan.</p>
+    <p>Semua data akan dihapus: skor, poin, histori, dan nomor ronde (kedua mode). Tindakan ini tidak dapat dibatalkan.</p>
     <div class="modal-actions">
       <button class="btn" id="resetCancel">Batal</button>
       <button class="btn primary" id="resetConfirm" style="background:var(--bad); color:#fff;">Reset Semua</button>
@@ -501,7 +626,7 @@
   <div class="box">
     <div class="trophy">🏆</div>
     <p class="who" id="winWhoText">TIM 2 MENANG RONDE!</p>
-    <p class="plus">+1 SKOR</p>
+    <p class="plus" id="winPlusText">+1 SKOR</p>
   </div>
 </div>
 
@@ -510,8 +635,12 @@
   'use strict';
 
   var STORAGE_KEY = 'dominoMandanGame';
+  var PLAYER_CLASSES = ['t1','t2','p3','p4'];
 
   var defaultState = {
+    gameMode: 'team', // 'team' | 'individual'
+
+    // --- team mode ---
     team1Name: 'Tim 1',
     team2Name: 'Tim 2',
     maxPoints: 10,
@@ -520,7 +649,13 @@
     team1Points: 0,
     team2Points: 0,
     roundNumber: 1,
-    history: []
+    history: [],
+
+    // --- individual mode (4 pemain, tanpa poin maks — total terus bertambah) ---
+    playerNames: ['Pemain 1', 'Pemain 2', 'Pemain 3', 'Pemain 4'],
+    playerPoints: [0, 0, 0, 0],
+    individualRound: 1,
+    individualHistory: []
   };
 
   var state = loadState();
@@ -532,6 +667,10 @@
       var parsed = JSON.parse(raw);
       var merged = Object.assign({}, defaultState, parsed);
       if(!Array.isArray(merged.history)) merged.history = [];
+      if(!Array.isArray(merged.playerNames) || merged.playerNames.length !== 4) merged.playerNames = defaultState.playerNames.slice();
+      if(!Array.isArray(merged.playerPoints) || merged.playerPoints.length !== 4) merged.playerPoints = [0,0,0,0];
+      if(!Array.isArray(merged.individualHistory)) merged.individualHistory = [];
+      if(merged.gameMode !== 'team' && merged.gameMode !== 'individual') merged.gameMode = 'team';
       return merged;
     }catch(e){
       return JSON.parse(JSON.stringify(defaultState));
@@ -555,14 +694,91 @@
   var col1 = $('col1'), col2 = $('col2');
   var roundLabel = $('roundLabel');
   var maxLabel = $('maxLabel');
+  var maxInfoWrap = $('maxInfoWrap');
   var statusText = $('statusText');
   var statusPill = $('statusPill');
+  var modePill = $('modePill');
   var historyList = $('historyList');
   var historyCount = $('historyCount');
   var pipsBox = $('pipsBox');
+  var pipsBoxIndividual = $('pipsBoxIndividual');
+  var teamWinsBoard = $('teamWinsBoard');
+  var individualLeaderboard = $('individualLeaderboard');
+  var teamsCols = $('teamsCols');
+  var playersGrid = $('playersGrid');
+
+  function buildPlayersGrid(){
+    var html = '';
+    for(var i=0;i<4;i++){
+      var cls = PLAYER_CLASSES[i];
+      html += '' +
+        '<div class="team-col ' + cls + '" id="pcol' + i + '">' +
+          '<div class="tname" id="pname' + i + '"></div>' +
+          '<div class="point-display" id="ppoint' + i + '">0</div>' +
+          '<div class="mini-label">Menang</div>' +
+          '<button class="win-btn" data-player="' + i + '">🏆 Menang +1</button>' +
+          '<button class="correction-btn" data-player="' + i + '">− Koreksi 1</button>' +
+        '</div>';
+    }
+    playersGrid.innerHTML = html;
+
+    playersGrid.querySelectorAll('.win-btn').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        var p = parseInt(btn.getAttribute('data-player'), 10);
+        recordIndividualWin(p);
+      });
+    });
+    playersGrid.querySelectorAll('.correction-btn').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        var p = parseInt(btn.getAttribute('data-player'), 10);
+        state.playerPoints[p] = Math.max(0, state.playerPoints[p] - 1);
+        render();
+        showToast('Koreksi: −1 dari ' + state.playerNames[p] + '.');
+      });
+    });
+  }
+  buildPlayersGrid();
+
+  function recordIndividualWin(i){
+    state.playerPoints[i] += 1;
+
+    var record = {
+      round: state.individualRound,
+      names: state.playerNames.slice(),
+      winnerIndex: i,
+      totalsAfter: state.playerPoints.slice()
+    };
+    state.individualHistory.push(record);
+    state.individualRound += 1;
+
+    render();
+    showToast('Ronde ' + record.round + ' dicatat · ' + state.playerNames[i] + ' menang!', true);
+  }
 
   // ---------- render ----------
   function render(){
+    var isTeam = state.gameMode === 'team';
+
+    modePill.textContent = isTeam ? '2 TIM' : '4 PEMAIN';
+    teamWinsBoard.style.display = isTeam ? '' : 'none';
+    individualLeaderboard.style.display = isTeam ? 'none' : '';
+    teamsCols.style.display = isTeam ? '' : 'none';
+    playersGrid.style.display = isTeam ? 'none' : '';
+    maxInfoWrap.style.display = isTeam ? '' : 'none';
+    $('sharedTurnOk').style.display = isTeam ? '' : 'none';
+    $('undoTurnBtn').style.display = isTeam ? '' : 'none';
+
+    if(isTeam){
+      renderTeamMode();
+    }else{
+      renderIndividualMode();
+    }
+
+    renderHistory();
+    saveState();
+  }
+
+  function renderTeamMode(){
     winsName1.textContent = state.team1Name;
     winsName2.textContent = state.team2Name;
     winsNum1.textContent = state.team1Wins;
@@ -604,42 +820,94 @@
       statusPill.querySelector('.dot').style.background = 'var(--good)';
     }
 
-    renderPips();
-    renderHistory();
-    saveState();
+    renderPips(pipsBox, state.roundNumber);
   }
 
-  function renderPips(){
+  function renderIndividualMode(){
+    roundLabel.textContent = 'Ronde ' + state.individualRound;
+    statusText.textContent = 'SKOR TERUS BERTAMBAH';
+    statusPill.querySelector('.dot').style.background = 'var(--good)';
+
+    var maxPts = Math.max.apply(null, state.playerPoints);
+    for(var i=0;i<4;i++){
+      $('pname' + i).textContent = state.playerNames[i];
+      $('ppoint' + i).textContent = state.playerPoints[i];
+      $('pcol' + i).classList.toggle('leading', state.playerPoints[i] === maxPts && maxPts > 0);
+    }
+
+    renderLeaderboard();
+    renderPips(pipsBoxIndividual, state.individualRound);
+  }
+
+  function renderLeaderboard(){
+    var rows = state.playerNames.map(function(name, i){
+      return { name: name, score: state.playerPoints[i] };
+    });
+    var maxScore = Math.max.apply(null, rows.map(function(r){ return r.score; }));
+    rows.sort(function(a,b){ return b.score - a.score; });
+
+    var html = rows.map(function(r, idx){
+      var isLeader = r.score === maxScore && maxScore > 0;
+      return '<div class="lb-row' + (isLeader ? ' leader' : '') + '">' +
+        '<div class="lb-rank">' + (idx+1) + '</div>' +
+        '<div class="lb-name">' + escapeHtml(r.name) + '</div>' +
+        '<div class="lb-score">' + r.score + '</div>' +
+        '</div>';
+    }).join('');
+    $('leaderboardList').innerHTML = html;
+  }
+
+  function renderPips(container, roundNum){
     // decorative pip pattern based on round number mod 6 (like a domino face)
-    var n = ((state.roundNumber - 1) % 6) + 1;
+    var n = ((roundNum - 1) % 6) + 1;
     var patterns = {
       1:[4], 2:[0,8], 3:[0,4,8], 4:[0,2,6,8], 5:[0,2,4,6,8], 6:[0,2,3,5,6,8]
     };
     var on = patterns[n];
-    pipsBox.innerHTML = '';
+    container.innerHTML = '';
     for(var i=0;i<9;i++){
       var el = document.createElement('i');
       if(on.indexOf(i) !== -1) el.className = 'on';
-      pipsBox.appendChild(el);
+      container.appendChild(el);
     }
   }
 
   function renderHistory(){
-    historyCount.textContent = state.history.length + ' ronde';
-    if(state.history.length === 0){
-      historyList.innerHTML = '<div class="history-empty">Belum ada ronde yang selesai.</div>';
-      return;
+    if(state.gameMode === 'team'){
+      historyCount.textContent = state.history.length + ' ronde';
+      if(state.history.length === 0){
+        historyList.innerHTML = '<div class="history-empty">Belum ada ronde yang selesai.</div>';
+        return;
+      }
+      var rows = state.history.slice().reverse().map(function(h){
+        var t1win = h.winner === 'team1';
+        return '<div class="h-row">' +
+          '<div class="h-round">#' + h.round + '</div>' +
+          '<div class="h-team ' + (t1win ? 'win':'') + '"><span class="n">' + escapeHtml(h.team1Name) + '</span><span class="p">' + h.team1Points + '</span></div>' +
+          '<div class="h-team ' + (!t1win ? 'win':'') + '"><span class="n">' + escapeHtml(h.team2Name) + '</span><span class="p">' + h.team2Points + '</span></div>' +
+          '<div class="h-tag">' + h.team1WinsAfter + ' — ' + h.team2WinsAfter + '</div>' +
+          '</div>';
+      }).join('');
+      historyList.innerHTML = rows;
+    }else{
+      historyCount.textContent = state.individualHistory.length + ' ronde';
+      if(state.individualHistory.length === 0){
+        historyList.innerHTML = '<div class="history-empty">Belum ada ronde yang tercatat.</div>';
+        return;
+      }
+      var irows = state.individualHistory.slice().reverse().map(function(h){
+        var cells = h.names.map(function(name, i){
+          var isTop = i === h.winnerIndex;
+          return '<div class="hi-p' + (isTop ? ' top':'') + '">' +
+            '<span class="n">' + escapeHtml(name) + '</span>' +
+            '<span class="add">' + (isTop ? '🏆' : '·') + '</span>' +
+            '<span class="tot">' + h.totalsAfter[i] + '</span>' +
+            '</div>';
+        }).join('');
+        return '<div class="hi-row"><div class="hi-round">#' + h.round + '</div>' + cells + '</div>';
+      }).join('');
+      historyList.innerHTML = irows;
     }
-    var rows = state.history.slice().reverse().map(function(h){
-      var t1win = h.winner === 'team1';
-      return '<div class="h-row">' +
-        '<div class="h-round">#' + h.round + '</div>' +
-        '<div class="h-team ' + (t1win ? 'win':'') + '"><span class="n">' + escapeHtml(h.team1Name) + '</span><span class="p">' + h.team1Points + '</span></div>' +
-        '<div class="h-team ' + (!t1win ? 'win':'') + '"><span class="n">' + escapeHtml(h.team2Name) + '</span><span class="p">' + h.team2Points + '</span></div>' +
-        '<div class="h-tag">' + h.team1WinsAfter + ' — ' + h.team2WinsAfter + '</div>' +
-        '</div>';
-    }).join('');
-    historyList.innerHTML = rows;
   }
 
   function escapeHtml(s){
@@ -648,7 +916,7 @@
     return d.innerHTML;
   }
 
-  // ---------- point controls ----------
+  // ---------- team mode point controls ----------
   function adjustPoint(team, delta){
     var key = team === 1 ? 'team1Points' : 'team2Points';
     var val = state[key] + delta;
@@ -658,7 +926,7 @@
     checkAutoFinish();
   }
 
-  document.querySelectorAll('.step-btn, .quick-btn').forEach(function(btn){
+  document.querySelectorAll('.teams-cols .step-btn, .teams-cols .quick-btn').forEach(function(btn){
     btn.addEventListener('click', function(){
       var team = parseInt(btn.getAttribute('data-team'), 10);
       lastTurnAdd = null;
@@ -673,7 +941,14 @@
     });
   });
 
+  // ---------- shared OK: submit turn points (team mode only — individual mode uses the per-player Menang button) ----------
   function submitTurnPoints(){
+    if(state.gameMode === 'team'){
+      submitTeamTurn();
+    }
+  }
+
+  function submitTeamTurn(){
     var raw1 = turnInput1.value;
     var raw2 = turnInput2.value;
     var has1 = raw1 !== '';
@@ -699,7 +974,7 @@
     if(has1) state.team1Points += v1;
     if(has2) state.team2Points += v2;
 
-    lastTurnAdd = { t1: has1 ? v1 : 0, t2: has2 ? v2 : 0 };
+    lastTurnAdd = { mode:'team', t1: has1 ? v1 : 0, t2: has2 ? v2 : 0 };
     updateUndoTurnBtnState();
 
     turnInput1.value = '';
@@ -737,9 +1012,9 @@
     }, 2600);
   }
 
-  // ---------- auto-finish round ----------
+  // ---------- auto-finish round (team mode only) ----------
   var finishing = false;
-  var lastTurnAdd = null; // {t1, t2} — the most recent points added via the shared OK button, so a mistaken entry can be undone
+  var lastTurnAdd = null; // {mode, ...} — the most recent points added via the shared OK button, so a mistaken entry can be undone
 
   function updateUndoTurnBtnState(){
     var btn = $('undoTurnBtn');
@@ -747,6 +1022,7 @@
   }
 
   function checkAutoFinish(){
+    if(state.gameMode !== 'team') return;
     if(finishing) return;
     var p1 = state.team1Points, p2 = state.team2Points, max = state.maxPoints;
     var t1over = p1 >= max, t2over = p2 >= max;
@@ -803,32 +1079,45 @@
 
     var winName = t1win ? state.team1Name : state.team2Name;
     $('winWhoText').textContent = '🏆 ' + winName.toUpperCase() + ' MENANG RONDE!';
+    $('winPlusText').textContent = '+1 SKOR';
     var banner = $('winBanner');
     banner.classList.add('show');
     setTimeout(function(){ banner.classList.remove('show'); }, 1800);
     showToast('Ronde ' + record.round + ' disimpan otomatis · ' + winName + ' +1 skor', true);
   }
 
-  // ---------- undo ----------
+  // ---------- undo ronde terakhir (branches by mode) ----------
   var undoModal = $('undoModal');
   $('undoBtn').addEventListener('click', function(){
-    if(state.history.length === 0){
+    var empty = state.gameMode === 'team' ? state.history.length === 0 : state.individualHistory.length === 0;
+    if(empty){
       showToast('Belum ada ronde untuk di-undo.');
       return;
     }
+    $('undoModalText').textContent = state.gameMode === 'team'
+      ? 'Ronde terakhir akan dihapus dari histori dan skor kemenangan akan dikembalikan.'
+      : 'Ronde terakhir akan dihapus dari histori dan poin pemain akan dikembalikan.';
     undoModal.classList.add('open');
   });
   $('undoCancel').addEventListener('click', function(){ undoModal.classList.remove('open'); });
   undoModal.addEventListener('click', function(e){ if(e.target === undoModal) undoModal.classList.remove('open'); });
 
   $('undoConfirm').addEventListener('click', function(){
-    var last = state.history.pop();
-    if(last){
-      if(last.winner === 'team1'){ state.team1Wins = Math.max(0, state.team1Wins - 1); }
-      else { state.team2Wins = Math.max(0, state.team2Wins - 1); }
-      state.roundNumber = last.round;
-      state.team1Points = 0;
-      state.team2Points = 0;
+    if(state.gameMode === 'team'){
+      var last = state.history.pop();
+      if(last){
+        if(last.winner === 'team1'){ state.team1Wins = Math.max(0, state.team1Wins - 1); }
+        else { state.team2Wins = Math.max(0, state.team2Wins - 1); }
+        state.roundNumber = last.round;
+        state.team1Points = 0;
+        state.team2Points = 0;
+      }
+    }else{
+      var ilast = state.individualHistory.pop();
+      if(ilast){
+        state.playerPoints[ilast.winnerIndex] = Math.max(0, state.playerPoints[ilast.winnerIndex] - 1);
+        state.individualRound = ilast.round;
+      }
     }
     lastTurnAdd = null;
     updateUndoTurnBtnState();
@@ -837,7 +1126,7 @@
     showToast('Ronde terakhir dibatalkan.');
   });
 
-  // ---------- reset ----------
+  // ---------- reset (both modes) ----------
   var resetModal = $('resetModal');
   $('resetBtn').addEventListener('click', function(){ resetModal.classList.add('open'); });
   $('resetCancel').addEventListener('click', function(){ resetModal.classList.remove('open'); });
@@ -850,6 +1139,11 @@
     state.team2Points = 0;
     state.roundNumber = 1;
     state.history = [];
+
+    state.playerPoints = [0,0,0,0];
+    state.individualRound = 1;
+    state.individualHistory = [];
+
     lastTurnAdd = null;
     updateUndoTurnBtnState();
     resetModal.classList.remove('open');
@@ -859,10 +1153,29 @@
 
   // ---------- settings ----------
   var settingsCard = $('settingsCard');
+  var settingsSelectedMode = state.gameMode;
+
+  function applySettingsModeUI(){
+    $('modeBtnTeam').classList.toggle('active', settingsSelectedMode === 'team');
+    $('modeBtnIndividual').classList.toggle('active', settingsSelectedMode === 'individual');
+    $('fieldGroupTeam').classList.toggle('active', settingsSelectedMode === 'team');
+    $('fieldGroupIndividual').classList.toggle('active', settingsSelectedMode === 'individual');
+  }
+
+  $('modeBtnTeam').addEventListener('click', function(){ settingsSelectedMode = 'team'; applySettingsModeUI(); });
+  $('modeBtnIndividual').addEventListener('click', function(){ settingsSelectedMode = 'individual'; applySettingsModeUI(); });
+
   $('settingsBtn').addEventListener('click', function(){
+    settingsSelectedMode = state.gameMode;
     $('inputTeam1').value = state.team1Name;
     $('inputTeam2').value = state.team2Name;
     $('inputMax').value = state.maxPoints;
+    $('inputPlayer1').value = state.playerNames[0];
+    $('inputPlayer2').value = state.playerNames[1];
+    $('inputPlayer3').value = state.playerNames[2];
+    $('inputPlayer4').value = state.playerNames[3];
+    applySettingsModeUI();
+
     settingsCard.classList.toggle('open');
     if(settingsCard.classList.contains('open')){
       setTimeout(function(){
@@ -880,7 +1193,16 @@
     if(n1) state.team1Name = n1;
     if(n2) state.team2Name = n2;
     if(!isNaN(max) && max > 0) state.maxPoints = max;
-    else showToast('Poin maksimum harus lebih besar dari 0.');
+    else if(settingsSelectedMode === 'team') showToast('Poin maksimum harus lebih besar dari 0.');
+
+    for(var i=0;i<4;i++){
+      var pn = $('inputPlayer' + (i+1)).value.trim();
+      if(pn) state.playerNames[i] = pn;
+    }
+
+    state.gameMode = settingsSelectedMode;
+    lastTurnAdd = null;
+    updateUndoTurnBtnState();
 
     settingsCard.classList.remove('open');
     render();
@@ -903,3 +1225,4 @@
 </script>
 </body>
 </html>
+
