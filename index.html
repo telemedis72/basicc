@@ -248,6 +248,15 @@
   }
   .quick-btn:active{transform:scale(.93);}
 
+  .pay-info{
+    width:100%; display:flex; flex-direction:column; gap:3px; align-items:center;
+    background:var(--bg); border:1px solid var(--line); border-radius:9px; padding:7px 8px; margin-top:-2px;
+  }
+  .pay-line{font-size:11px; font-weight:700; text-align:center; line-height:1.4;}
+  .pay-line.owe{color:var(--bad);}
+  .pay-line.get{color:var(--good);}
+  .pay-line.empty{color:var(--ink-faint); font-weight:600;}
+
   .win-btn{
     width:100%; border:none; border-radius:12px; padding:15px 8px; margin-top:4px;
     font-family:'Inter'; font-weight:800; font-size:14px; letter-spacing:.01em; color:#fff; cursor:pointer;
@@ -484,6 +493,18 @@
         <label>Nama Pemain 4</label>
         <input type="text" id="inputPlayer4" maxlength="24">
       </div>
+
+      <div class="mode-toggle">
+        <div class="mode-toggle-btn" id="subModeBtnPoints" data-submode="points">🎯 Poin Biasa</div>
+        <div class="mode-toggle-btn" id="subModeBtnBayar" data-submode="bayar">💸 Mode Bayar</div>
+      </div>
+
+      <div class="field-group" id="fieldGroupNominal">
+        <div class="field">
+          <label>Nominal Menang (Rp) — berlaku untuk semua pemain</label>
+          <input type="number" id="inputNominalShared" min="0" step="500" placeholder="0">
+        </div>
+      </div>
     </div>
 
     <div class="settings-actions">
@@ -655,7 +676,12 @@
     playerNames: ['Pemain 1', 'Pemain 2', 'Pemain 3', 'Pemain 4'],
     playerPoints: [0, 0, 0, 0],
     individualRound: 1,
-    individualHistory: []
+    individualHistory: [],
+
+    // --- individual mode: sub-mode 'points' (biasa) atau 'bayar' (nominal Rupiah) ---
+    individualSubMode: 'points',
+    bayarNominal: 0, // Rp yang didapat pemenang dari TIAP lawan setiap menang — sama untuk semua pemain
+    payMatrix: [[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]] // payMatrix[i][j] = total Rp yang sudah dibayar pemain i ke pemain j
   };
 
   var state = loadState();
@@ -670,6 +696,16 @@
       if(!Array.isArray(merged.playerNames) || merged.playerNames.length !== 4) merged.playerNames = defaultState.playerNames.slice();
       if(!Array.isArray(merged.playerPoints) || merged.playerPoints.length !== 4) merged.playerPoints = [0,0,0,0];
       if(!Array.isArray(merged.individualHistory)) merged.individualHistory = [];
+      if(merged.individualSubMode !== 'points' && merged.individualSubMode !== 'bayar') merged.individualSubMode = 'points';
+      var parsedNominal = parseInt(merged.bayarNominal, 10);
+      merged.bayarNominal = (!isNaN(parsedNominal) && parsedNominal >= 0) ? parsedNominal : 0;
+      if(!Array.isArray(merged.payMatrix) || merged.payMatrix.length !== 4){
+        merged.payMatrix = [[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]];
+      }else{
+        for(var r=0;r<4;r++){
+          if(!Array.isArray(merged.payMatrix[r]) || merged.payMatrix[r].length !== 4) merged.payMatrix[r] = [0,0,0,0];
+        }
+      }
       if(merged.gameMode !== 'team' && merged.gameMode !== 'individual') merged.gameMode = 'team';
       return merged;
     }catch(e){
@@ -707,6 +743,10 @@
   var teamsCols = $('teamsCols');
   var playersGrid = $('playersGrid');
 
+  function formatRupiah(n){
+    return 'Rp' + Math.round(n).toLocaleString('id-ID');
+  }
+
   function buildPlayersGrid(){
     var html = '';
     for(var i=0;i<4;i++){
@@ -715,6 +755,7 @@
         '<div class="team-col ' + cls + '" id="pcol' + i + '">' +
           '<div class="tname" id="pname' + i + '"></div>' +
           '<div class="point-display" id="ppoint' + i + '">0</div>' +
+          '<div class="pay-info" id="paybox' + i + '" style="display:none"></div>' +
           '<div class="mini-label">Menang</div>' +
           '<button class="win-btn" data-player="' + i + '">🏆 Menang +1</button>' +
           '<button class="correction-btn" data-player="' + i + '">− Koreksi 1</button>' +
@@ -742,17 +783,32 @@
   function recordIndividualWin(i){
     state.playerPoints[i] += 1;
 
+    var isBayar = state.individualSubMode === 'bayar';
+    var nominal = isBayar ? (state.bayarNominal || 0) : 0;
+    if(isBayar && nominal > 0){
+      for(var j=0;j<4;j++){
+        if(j === i) continue;
+        state.payMatrix[j][i] += nominal; // each opponent j owes the winner i
+      }
+    }
+
     var record = {
       round: state.individualRound,
       names: state.playerNames.slice(),
       winnerIndex: i,
-      totalsAfter: state.playerPoints.slice()
+      totalsAfter: state.playerPoints.slice(),
+      subMode: state.individualSubMode,
+      nominalApplied: nominal
     };
     state.individualHistory.push(record);
     state.individualRound += 1;
 
     render();
-    showToast('Ronde ' + record.round + ' dicatat · ' + state.playerNames[i] + ' menang!', true);
+    if(isBayar && nominal > 0){
+      showToast('Ronde ' + record.round + ' · ' + state.playerNames[i] + ' menang, dapat ' + formatRupiah(nominal) + ' dari tiap lawan!', true);
+    }else{
+      showToast('Ronde ' + record.round + ' dicatat · ' + state.playerNames[i] + ' menang!', true);
+    }
   }
 
   // ---------- render ----------
@@ -825,14 +881,33 @@
 
   function renderIndividualMode(){
     roundLabel.textContent = 'Ronde ' + state.individualRound;
-    statusText.textContent = 'SKOR TERUS BERTAMBAH';
+    statusText.textContent = state.individualSubMode === 'bayar' ? 'MODE BAYAR — SKOR TERUS BERTAMBAH' : 'SKOR TERUS BERTAMBAH';
     statusPill.querySelector('.dot').style.background = 'var(--good)';
 
+    var isBayar = state.individualSubMode === 'bayar';
     var maxPts = Math.max.apply(null, state.playerPoints);
     for(var i=0;i<4;i++){
       $('pname' + i).textContent = state.playerNames[i];
       $('ppoint' + i).textContent = state.playerPoints[i];
       $('pcol' + i).classList.toggle('leading', state.playerPoints[i] === maxPts && maxPts > 0);
+
+      var box = $('paybox' + i);
+      if(!isBayar){
+        box.style.display = 'none';
+      }else{
+        box.style.display = 'flex';
+        var lines = [];
+        for(var j=0;j<4;j++){
+          if(j === i) continue;
+          var net = state.payMatrix[i][j] - state.payMatrix[j][i]; // >0: i owes j
+          if(net > 0){
+            lines.push('<div class="pay-line owe">→ Bayar ' + escapeHtml(state.playerNames[j]) + ': ' + formatRupiah(net) + '</div>');
+          }else if(net < 0){
+            lines.push('<div class="pay-line get">← Terima dari ' + escapeHtml(state.playerNames[j]) + ': ' + formatRupiah(-net) + '</div>');
+          }
+        }
+        box.innerHTML = lines.length ? lines.join('') : '<div class="pay-line empty">Impas</div>';
+      }
     }
 
     renderLeaderboard();
@@ -898,9 +973,11 @@
       var irows = state.individualHistory.slice().reverse().map(function(h){
         var cells = h.names.map(function(name, i){
           var isTop = i === h.winnerIndex;
+          var mark = '·';
+          if(isTop) mark = (h.subMode === 'bayar' && h.nominalApplied > 0) ? ('🏆 +' + formatRupiah(h.nominalApplied)) : '🏆';
           return '<div class="hi-p' + (isTop ? ' top':'') + '">' +
             '<span class="n">' + escapeHtml(name) + '</span>' +
-            '<span class="add">' + (isTop ? '🏆' : '·') + '</span>' +
+            '<span class="add">' + mark + '</span>' +
             '<span class="tot">' + h.totalsAfter[i] + '</span>' +
             '</div>';
         }).join('');
@@ -1116,6 +1193,12 @@
       var ilast = state.individualHistory.pop();
       if(ilast){
         state.playerPoints[ilast.winnerIndex] = Math.max(0, state.playerPoints[ilast.winnerIndex] - 1);
+        if(ilast.subMode === 'bayar' && ilast.nominalApplied > 0){
+          for(var j2=0;j2<4;j2++){
+            if(j2 === ilast.winnerIndex) continue;
+            state.payMatrix[j2][ilast.winnerIndex] = Math.max(0, state.payMatrix[j2][ilast.winnerIndex] - ilast.nominalApplied);
+          }
+        }
         state.individualRound = ilast.round;
       }
     }
@@ -1143,6 +1226,7 @@
     state.playerPoints = [0,0,0,0];
     state.individualRound = 1;
     state.individualHistory = [];
+    state.payMatrix = [[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]];
 
     lastTurnAdd = null;
     updateUndoTurnBtnState();
@@ -1154,19 +1238,27 @@
   // ---------- settings ----------
   var settingsCard = $('settingsCard');
   var settingsSelectedMode = state.gameMode;
+  var settingsSelectedSubMode = state.individualSubMode;
 
   function applySettingsModeUI(){
     $('modeBtnTeam').classList.toggle('active', settingsSelectedMode === 'team');
     $('modeBtnIndividual').classList.toggle('active', settingsSelectedMode === 'individual');
     $('fieldGroupTeam').classList.toggle('active', settingsSelectedMode === 'team');
     $('fieldGroupIndividual').classList.toggle('active', settingsSelectedMode === 'individual');
+
+    $('subModeBtnPoints').classList.toggle('active', settingsSelectedSubMode === 'points');
+    $('subModeBtnBayar').classList.toggle('active', settingsSelectedSubMode === 'bayar');
+    $('fieldGroupNominal').classList.toggle('active', settingsSelectedSubMode === 'bayar');
   }
 
   $('modeBtnTeam').addEventListener('click', function(){ settingsSelectedMode = 'team'; applySettingsModeUI(); });
   $('modeBtnIndividual').addEventListener('click', function(){ settingsSelectedMode = 'individual'; applySettingsModeUI(); });
+  $('subModeBtnPoints').addEventListener('click', function(){ settingsSelectedSubMode = 'points'; applySettingsModeUI(); });
+  $('subModeBtnBayar').addEventListener('click', function(){ settingsSelectedSubMode = 'bayar'; applySettingsModeUI(); });
 
   $('settingsBtn').addEventListener('click', function(){
     settingsSelectedMode = state.gameMode;
+    settingsSelectedSubMode = state.individualSubMode;
     $('inputTeam1').value = state.team1Name;
     $('inputTeam2').value = state.team2Name;
     $('inputMax').value = state.maxPoints;
@@ -1174,6 +1266,7 @@
     $('inputPlayer2').value = state.playerNames[1];
     $('inputPlayer3').value = state.playerNames[2];
     $('inputPlayer4').value = state.playerNames[3];
+    $('inputNominalShared').value = state.bayarNominal;
     applySettingsModeUI();
 
     settingsCard.classList.toggle('open');
@@ -1199,8 +1292,12 @@
       var pn = $('inputPlayer' + (i+1)).value.trim();
       if(pn) state.playerNames[i] = pn;
     }
+    var nomRaw = $('inputNominalShared').value;
+    var nom = parseInt(nomRaw, 10);
+    state.bayarNominal = (nomRaw !== '' && !isNaN(nom) && nom >= 0) ? nom : 0;
 
     state.gameMode = settingsSelectedMode;
+    state.individualSubMode = settingsSelectedSubMode;
     lastTurnAdd = null;
     updateUndoTurnBtnState();
 
