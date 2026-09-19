@@ -366,6 +366,21 @@
   .hi-p.top .add{color:var(--gold);}
   .hi-p .tot{font-size:13px; font-weight:800; font-family:'Barlow Condensed'; color:var(--ink);}
 
+  .settle-row{
+    display:grid; grid-template-columns:1fr auto 1fr auto; align-items:center; gap:8px;
+    padding:12px 6px; border-bottom:1px solid var(--line);
+  }
+  .settle-row:last-child{border-bottom:none;}
+  .settle-name{font-weight:700; font-size:13.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .settle-name.from{color:var(--bad); text-align:right;}
+  .settle-name.to{color:var(--good); text-align:left;}
+  .settle-arrow{color:var(--ink-faint); font-size:16px; font-weight:700;}
+  .settle-amt{
+    font-family:'Barlow Condensed'; font-weight:800; font-size:18px; color:var(--gold);
+    white-space:nowrap; text-align:right;
+  }
+  .settle-sub{color:var(--ink-faint); font-size:12px; margin:-4px 0 10px; line-height:1.5;}
+
   /* ---------- modal ---------- */
   .modal-overlay{
     position:fixed; inset:0; background:rgba(8,10,13,0.72); backdrop-filter:blur(3px);
@@ -545,6 +560,13 @@
       <div class="pips" id="pipsBoxIndividual"></div>
       <div class="line"></div>
     </div>
+  </section>
+
+  <!-- SETTLEMENT CARD (fitur tambahan — hutang grup disederhanakan) -->
+  <section class="history-card" id="settlementCard" style="display:none">
+    <h3>💸 Penyelesaian Hutang Tersederhana</h3>
+    <p class="settle-sub">Siapa transfer ke siapa, berapa — jumlah transaksi sudah dipangkas seminimal mungkin dari seluruh hutang antar pemain.</p>
+    <div id="settlementList"></div>
   </section>
 
   <!-- ROUND CARD -->
@@ -774,9 +796,52 @@
     playersGrid.querySelectorAll('.correction-btn').forEach(function(btn){
       btn.addEventListener('click', function(){
         var p = parseInt(btn.getAttribute('data-player'), 10);
+        if(state.playerPoints[p] <= 0){
+          showToast(state.playerNames[p] + ' belum punya poin untuk dikoreksi.');
+          return;
+        }
+
+        // Cari catatan kemenangan TERAKHIR milik pemain ini di histori, lalu
+        // hapus catatan itu juga — supaya histori ikut konsisten dengan poin
+        // dan uangnya, bukan cuma angka poinnya saja yang berkurang.
+        var histIdx = -1;
+        for(var k = state.individualHistory.length - 1; k >= 0; k--){
+          if(state.individualHistory[k].winnerIndex === p){ histIdx = k; break; }
+        }
+
+        var isBayar = state.individualSubMode === 'bayar';
+        var nominalToUndo = 0;
+
+        if(histIdx !== -1){
+          var removed = state.individualHistory.splice(histIdx, 1)[0];
+          // hanya batalkan uang kalau ronde yang dihapus memang tercatat pakai Mode Bayar
+          if(removed.subMode === 'bayar' && removed.nominalApplied) nominalToUndo = removed.nominalApplied;
+          // ronde-ronde SESUDAHNYA di histori mencatat total kumulatif yang masih
+          // menghitung kemenangan yang baru dihapus ini — jadi perlu digeser turun 1
+          // supaya "total setelah ronde" di histori tetap benar.
+          for(var m = histIdx; m < state.individualHistory.length; m++){
+            state.individualHistory[m].totalsAfter[p] = Math.max(0, state.individualHistory[m].totalsAfter[p] - 1);
+          }
+          // rapikan ulang nomor ronde di histori biar urut tanpa celah
+          for(var rn = 0; rn < state.individualHistory.length; rn++){
+            state.individualHistory[rn].round = rn + 1;
+          }
+          state.individualRound = state.individualHistory.length + 1;
+        }else if(isBayar){
+          nominalToUndo = state.bayarNominal || 0;
+        }
+
         state.playerPoints[p] = Math.max(0, state.playerPoints[p] - 1);
+
+        if(isBayar && nominalToUndo > 0){
+          for(var j=0;j<4;j++){
+            if(j === p) continue;
+            state.payMatrix[j][p] = Math.max(0, state.payMatrix[j][p] - nominalToUndo);
+          }
+        }
+
         render();
-        showToast('Koreksi: −1 dari ' + state.playerNames[p] + '.');
+        showToast('Koreksi: −1 dari ' + state.playerNames[p] + (histIdx !== -1 ? ' (histori & uang ikut dibatalkan)' : ''));
       });
     });
   }
@@ -825,6 +890,7 @@
     maxInfoWrap.style.display = isTeam ? '' : 'none';
     $('sharedTurnOk').style.display = isTeam ? '' : 'none';
     $('undoTurnBtn').style.display = isTeam ? '' : 'none';
+    if(isTeam && $('settlementCard')) $('settlementCard').style.display = 'none';
 
     if(isTeam){
       renderTeamMode();
@@ -888,6 +954,7 @@
 
     var isBayar = state.individualSubMode === 'bayar';
     var maxPts = Math.max.apply(null, state.playerPoints);
+    var settlements = isBayar ? computeSimplifiedSettlements() : [];
     for(var i=0;i<4;i++){
       $('pname' + i).textContent = state.playerNames[i];
       $('ppoint' + i).textContent = state.playerPoints[i];
@@ -913,7 +980,33 @@
     }
 
     renderLeaderboard();
+    renderSettlementCard(isBayar, settlements);
     renderPips(pipsBoxIndividual, state.individualRound);
+  }
+
+  // Tambahan (tidak mengubah tampilan lama di atas): kartu terpisah yang
+  // menyederhanakan seluruh hutang grup jadi transaksi paling sedikit.
+  function renderSettlementCard(isBayar, settlements){
+    var card = $('settlementCard');
+    if(!card) return;
+    if(!isBayar){
+      card.style.display = 'none';
+      return;
+    }
+    card.style.display = 'block';
+    var list = $('settlementList');
+    if(!settlements.length){
+      list.innerHTML = '<div class="history-empty">Semua sudah impas — tidak ada transaksi.</div>';
+      return;
+    }
+    list.innerHTML = settlements.map(function(tx){
+      return '<div class="settle-row">' +
+        '<div class="settle-name from">' + escapeHtml(state.playerNames[tx.from]) + '</div>' +
+        '<div class="settle-arrow">➜</div>' +
+        '<div class="settle-name to">' + escapeHtml(state.playerNames[tx.to]) + '</div>' +
+        '<div class="settle-amt">' + formatRupiah(tx.amount) + '</div>' +
+        '</div>';
+    }).join('');
   }
 
   function netBalance(i){
@@ -923,6 +1016,36 @@
       net += state.payMatrix[j][i] - state.payMatrix[i][j]; // received minus paid
     }
     return net;
+  }
+
+  // Reduce everyone's overall net balance to the smallest possible set of
+  // direct transactions (a debt is "routed" through whoever nets it out
+  // fastest, instead of everyone paying every opponent one by one).
+  function computeSimplifiedSettlements(){
+    var debtors = [];
+    var creditors = [];
+    for(var i=0;i<4;i++){
+      var net = netBalance(i);
+      if(net < 0) debtors.push({ idx: i, amt: -net });
+      else if(net > 0) creditors.push({ idx: i, amt: net });
+    }
+    debtors.sort(function(a,b){ return b.amt - a.amt; });
+    creditors.sort(function(a,b){ return b.amt - a.amt; });
+
+    var transactions = [];
+    var di = 0, ci = 0;
+    while(di < debtors.length && ci < creditors.length){
+      var d = debtors[di], c = creditors[ci];
+      var amt = Math.min(d.amt, c.amt);
+      if(amt > 0){
+        transactions.push({ from: d.idx, to: c.idx, amount: amt });
+      }
+      d.amt -= amt;
+      c.amt -= amt;
+      if(d.amt === 0) di++;
+      if(c.amt === 0) ci++;
+    }
+    return transactions;
   }
 
   function renderLeaderboard(){
@@ -1342,4 +1465,3 @@
 </script>
 </body>
 </html>
-
