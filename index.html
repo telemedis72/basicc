@@ -135,6 +135,30 @@
   }
 
   /* ---------- leaderboard (individual mode) ---------- */
+  .settlement-board{
+    background:linear-gradient(180deg, var(--card-2), var(--card));
+    border:1px solid var(--line); border-radius:var(--radius);
+    box-shadow:var(--shadow); padding:16px; margin-top:14px;
+  }
+  .settlement-board h3{
+    font-family:'Barlow Condensed'; font-size:19px; font-weight:700; margin:0 0 4px; letter-spacing:.01em;
+  }
+  .settlement-sub{font-size:12px; color:var(--ink-dim); line-height:1.5; margin:0 0 12px;}
+  .settle-empty{color:var(--ink-faint); font-size:13.5px; text-align:center; padding:10px 0;}
+  .settle-row{
+    display:flex; align-items:center; justify-content:space-between; gap:8px;
+    padding:10px 4px; border-bottom:1px solid var(--line); font-size:14px; font-weight:700;
+  }
+  .settle-row:last-child{border-bottom:none;}
+  .settle-who{display:flex; align-items:center; gap:8px; min-width:0;}
+  .settle-who span{white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .settle-who .arrow{color:var(--ink-faint); font-weight:400;}
+  .settle-who .n1.t1, .settle-who .n2.t1{color:var(--t1);}
+  .settle-who .n1.t2, .settle-who .n2.t2{color:var(--t2);}
+  .settle-who .n1.p3, .settle-who .n2.p3{color:var(--p3);}
+  .settle-who .n1.p4, .settle-who .n2.p4{color:var(--p4);}
+  .settle-amt{font-family:'Barlow Condensed'; font-weight:800; font-size:17px; color:var(--gold); white-space:nowrap;}
+
   .leaderboard-board{
     background:linear-gradient(180deg, var(--card-2), var(--card));
     border:1px solid var(--line); border-radius:var(--radius);
@@ -366,21 +390,6 @@
   .hi-p.top .add{color:var(--gold);}
   .hi-p .tot{font-size:13px; font-weight:800; font-family:'Barlow Condensed'; color:var(--ink);}
 
-  .settle-row{
-    display:grid; grid-template-columns:1fr auto 1fr auto; align-items:center; gap:8px;
-    padding:12px 6px; border-bottom:1px solid var(--line);
-  }
-  .settle-row:last-child{border-bottom:none;}
-  .settle-name{font-weight:700; font-size:13.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
-  .settle-name.from{color:var(--bad); text-align:right;}
-  .settle-name.to{color:var(--good); text-align:left;}
-  .settle-arrow{color:var(--ink-faint); font-size:16px; font-weight:700;}
-  .settle-amt{
-    font-family:'Barlow Condensed'; font-weight:800; font-size:18px; color:var(--gold);
-    white-space:nowrap; text-align:right;
-  }
-  .settle-sub{color:var(--ink-faint); font-size:12px; margin:-4px 0 10px; line-height:1.5;}
-
   /* ---------- modal ---------- */
   .modal-overlay{
     position:fixed; inset:0; background:rgba(8,10,13,0.72); backdrop-filter:blur(3px);
@@ -475,7 +484,7 @@
 
     <div class="mode-toggle">
       <div class="mode-toggle-btn" id="modeBtnTeam" data-mode="team">👥 2 Tim</div>
-      <div class="mode-toggle-btn" id="modeBtnIndividual" data-mode="individual">🀱 4 Pemain</div>
+      <div class="mode-toggle-btn" id="modeBtnIndividual" data-mode="individual">🀱 Perorangan</div>
     </div>
 
     <div class="field-group" id="fieldGroupTeam">
@@ -494,6 +503,12 @@
     </div>
 
     <div class="field-group" id="fieldGroupIndividual">
+      <div class="mode-toggle" id="countToggle">
+        <div class="mode-toggle-btn" id="countBtn2" data-count="2">Ber-2</div>
+        <div class="mode-toggle-btn" id="countBtn3" data-count="3">Ber-3</div>
+        <div class="mode-toggle-btn" id="countBtn4" data-count="4">Ber-4</div>
+      </div>
+
       <div class="field">
         <label>Nama Pemain 1</label>
         <input type="text" id="inputPlayer1" maxlength="24">
@@ -502,11 +517,11 @@
         <label>Nama Pemain 2</label>
         <input type="text" id="inputPlayer2" maxlength="24">
       </div>
-      <div class="field">
+      <div class="field" id="fieldPlayer3">
         <label>Nama Pemain 3</label>
         <input type="text" id="inputPlayer3" maxlength="24">
       </div>
-      <div class="field">
+      <div class="field" id="fieldPlayer4">
         <label>Nama Pemain 4</label>
         <input type="text" id="inputPlayer4" maxlength="24">
       </div>
@@ -528,6 +543,8 @@
       <button class="btn" id="cancelSettings">Tutup</button>
       <button class="btn primary" id="saveSettings">Simpan</button>
     </div>
+
+    <button class="util-btn warn" id="hardResetBtn" style="width:100%; margin-top:10px;">🗑 Hapus Total Semua Data Lama Tersimpan</button>
   </section>
 
   <!-- WINS BOARD (mode tim) -->
@@ -562,10 +579,10 @@
     </div>
   </section>
 
-  <!-- SETTLEMENT CARD (fitur tambahan — hutang grup disederhanakan) -->
-  <section class="history-card" id="settlementCard" style="display:none">
+  <!-- SIMPLIFIED DEBT SETTLEMENT (mode bayar) -->
+  <section class="settlement-board" id="settlementBoard" style="display:none">
     <h3>💸 Penyelesaian Hutang Tersederhana</h3>
-    <p class="settle-sub">Siapa transfer ke siapa, berapa — jumlah transaksi sudah dipangkas seminimal mungkin dari seluruh hutang antar pemain.</p>
+    <p class="settlement-sub">Siapa transfer ke siapa, berapa — jumlah transaksi sudah dipangkas seminimal mungkin dari seluruh hutang antar pemain.</p>
     <div id="settlementList"></div>
   </section>
 
@@ -666,6 +683,18 @@
   </div>
 </div>
 
+<!-- HARD RESET CONFIRM MODAL -->
+<div class="modal-overlay" id="hardResetModal">
+  <div class="modal">
+    <h3>🗑️ Hapus Total Semua Data</h3>
+    <p>Ini akan menghapus <b>semua</b> data tersimpan di HP/browser ini — termasuk nama tim/pemain, pengaturan mode, nominal, skor, dan histori dari versi lama sekalipun. Aplikasi akan dimuat ulang dari awal. Tindakan ini tidak dapat dibatalkan.</p>
+    <div class="modal-actions">
+      <button class="btn" id="hardResetCancel">Batal</button>
+      <button class="btn primary" id="hardResetConfirm" style="background:var(--bad); color:#fff;">Ya, Hapus Total</button>
+    </div>
+  </div>
+</div>
+
 <!-- WIN BANNER -->
 <div class="win-banner" id="winBanner">
   <div class="box">
@@ -696,7 +725,8 @@
     roundNumber: 1,
     history: [],
 
-    // --- individual mode (4 pemain, tanpa poin maks — total terus bertambah) ---
+    // --- individual mode (2-4 pemain, tanpa poin maks — total terus bertambah) ---
+    playerCount: 4,
     playerNames: ['Pemain 1', 'Pemain 2', 'Pemain 3', 'Pemain 4'],
     playerPoints: [0, 0, 0, 0],
     individualRound: 1,
@@ -717,6 +747,7 @@
       var parsed = JSON.parse(raw);
       var merged = Object.assign({}, defaultState, parsed);
       if(!Array.isArray(merged.history)) merged.history = [];
+      if([2,3,4].indexOf(merged.playerCount) === -1) merged.playerCount = 4;
       if(!Array.isArray(merged.playerNames) || merged.playerNames.length !== 4) merged.playerNames = defaultState.playerNames.slice();
       if(!Array.isArray(merged.playerPoints) || merged.playerPoints.length !== 4) merged.playerPoints = [0,0,0,0];
       if(!Array.isArray(merged.individualHistory)) merged.individualHistory = [];
@@ -764,6 +795,8 @@
   var pipsBoxIndividual = $('pipsBoxIndividual');
   var teamWinsBoard = $('teamWinsBoard');
   var individualLeaderboard = $('individualLeaderboard');
+  var settlementBoard = $('settlementBoard');
+  var settlementList = $('settlementList');
   var teamsCols = $('teamsCols');
   var playersGrid = $('playersGrid');
 
@@ -772,11 +805,13 @@
   }
 
   function buildPlayersGrid(){
+    var count = state.playerCount;
     var html = '';
-    for(var i=0;i<4;i++){
+    for(var i=0;i<count;i++){
       var cls = PLAYER_CLASSES[i];
+      var spanStyle = (count === 3 && i === 2) ? ' style="grid-column:1 / -1"' : '';
       html += '' +
-        '<div class="team-col ' + cls + '" id="pcol' + i + '">' +
+        '<div class="team-col ' + cls + '" id="pcol' + i + '"' + spanStyle + '>' +
           '<div class="tname" id="pname' + i + '"></div>' +
           '<div class="point-display" id="ppoint' + i + '">0</div>' +
           '<div class="pay-info" id="paybox' + i + '" style="display:none"></div>' +
@@ -797,51 +832,37 @@
       btn.addEventListener('click', function(){
         var p = parseInt(btn.getAttribute('data-player'), 10);
         if(state.playerPoints[p] <= 0){
-          showToast(state.playerNames[p] + ' belum punya poin untuk dikoreksi.');
+          showToast('Skor ' + state.playerNames[p] + ' sudah 0.');
           return;
         }
 
-        // Cari catatan kemenangan TERAKHIR milik pemain ini di histori, lalu
-        // hapus catatan itu juga — supaya histori ikut konsisten dengan poin
-        // dan uangnya, bukan cuma angka poinnya saja yang berkurang.
-        var histIdx = -1;
-        for(var k = state.individualHistory.length - 1; k >= 0; k--){
-          if(state.individualHistory[k].winnerIndex === p){ histIdx = k; break; }
-        }
-
-        var isBayar = state.individualSubMode === 'bayar';
-        var nominalToUndo = 0;
-
-        if(histIdx !== -1){
-          var removed = state.individualHistory.splice(histIdx, 1)[0];
-          // hanya batalkan uang kalau ronde yang dihapus memang tercatat pakai Mode Bayar
-          if(removed.subMode === 'bayar' && removed.nominalApplied) nominalToUndo = removed.nominalApplied;
-          // ronde-ronde SESUDAHNYA di histori mencatat total kumulatif yang masih
-          // menghitung kemenangan yang baru dihapus ini — jadi perlu digeser turun 1
-          // supaya "total setelah ronde" di histori tetap benar.
-          for(var m = histIdx; m < state.individualHistory.length; m++){
-            state.individualHistory[m].totalsAfter[p] = Math.max(0, state.individualHistory[m].totalsAfter[p] - 1);
+        // find this player's most recent win in history and remove that round entirely —
+        // otherwise the score goes down but the history row (and the debt it created) stays stuck.
+        var removed = null;
+        for(var k=state.individualHistory.length-1;k>=0;k--){
+          if(state.individualHistory[k].winnerIndex === p){
+            removed = state.individualHistory.splice(k,1)[0];
+            break;
           }
-          // rapikan ulang nomor ronde di histori biar urut tanpa celah
-          for(var rn = 0; rn < state.individualHistory.length; rn++){
-            state.individualHistory[rn].round = rn + 1;
-          }
-          state.individualRound = state.individualHistory.length + 1;
-        }else if(isBayar){
-          nominalToUndo = state.bayarNominal || 0;
         }
 
         state.playerPoints[p] = Math.max(0, state.playerPoints[p] - 1);
 
-        if(isBayar && nominalToUndo > 0){
-          for(var j=0;j<4;j++){
+        if(removed && removed.subMode === 'bayar' && removed.nominalApplied > 0){
+          for(var j=0;j<removed.names.length;j++){
             if(j === p) continue;
-            state.payMatrix[j][p] = Math.max(0, state.payMatrix[j][p] - nominalToUndo);
+            state.payMatrix[j][p] = Math.max(0, state.payMatrix[j][p] - removed.nominalApplied);
+          }
+        }else if(!removed && state.individualSubMode === 'bayar' && state.bayarNominal > 0){
+          // fallback (shouldn't normally happen) — still reverse the debt using the current nominal
+          for(var j2=0;j2<state.playerCount;j2++){
+            if(j2 === p) continue;
+            state.payMatrix[j2][p] = Math.max(0, state.payMatrix[j2][p] - state.bayarNominal);
           }
         }
 
         render();
-        showToast('Koreksi: −1 dari ' + state.playerNames[p] + (histIdx !== -1 ? ' (histori & uang ikut dibatalkan)' : ''));
+        showToast(removed ? ('Ronde #' + removed.round + ' (' + state.playerNames[p] + ' menang) dibatalkan dari histori.') : ('Koreksi: −1 dari ' + state.playerNames[p] + '.'));
       });
     });
   }
@@ -853,7 +874,7 @@
     var isBayar = state.individualSubMode === 'bayar';
     var nominal = isBayar ? (state.bayarNominal || 0) : 0;
     if(isBayar && nominal > 0){
-      for(var j=0;j<4;j++){
+      for(var j=0;j<state.playerCount;j++){
         if(j === i) continue;
         state.payMatrix[j][i] += nominal; // each opponent j owes the winner i
       }
@@ -861,9 +882,9 @@
 
     var record = {
       round: state.individualRound,
-      names: state.playerNames.slice(),
+      names: state.playerNames.slice(0, state.playerCount),
       winnerIndex: i,
-      totalsAfter: state.playerPoints.slice(),
+      totalsAfter: state.playerPoints.slice(0, state.playerCount),
       subMode: state.individualSubMode,
       nominalApplied: nominal
     };
@@ -882,15 +903,15 @@
   function render(){
     var isTeam = state.gameMode === 'team';
 
-    modePill.textContent = isTeam ? '2 TIM' : '4 PEMAIN';
+    modePill.textContent = isTeam ? '2 TIM' : (state.playerCount + ' PEMAIN');
     teamWinsBoard.style.display = isTeam ? '' : 'none';
     individualLeaderboard.style.display = isTeam ? 'none' : '';
+    settlementBoard.style.display = isTeam ? 'none' : '';
     teamsCols.style.display = isTeam ? '' : 'none';
     playersGrid.style.display = isTeam ? 'none' : '';
     maxInfoWrap.style.display = isTeam ? '' : 'none';
     $('sharedTurnOk').style.display = isTeam ? '' : 'none';
     $('undoTurnBtn').style.display = isTeam ? '' : 'none';
-    if(isTeam && $('settlementCard')) $('settlementCard').style.display = 'none';
 
     if(isTeam){
       renderTeamMode();
@@ -953,9 +974,9 @@
     statusPill.querySelector('.dot').style.background = 'var(--good)';
 
     var isBayar = state.individualSubMode === 'bayar';
-    var maxPts = Math.max.apply(null, state.playerPoints);
-    var settlements = isBayar ? computeSimplifiedSettlements() : [];
-    for(var i=0;i<4;i++){
+    var count = state.playerCount;
+    var maxPts = Math.max.apply(null, state.playerPoints.slice(0, count));
+    for(var i=0;i<count;i++){
       $('pname' + i).textContent = state.playerNames[i];
       $('ppoint' + i).textContent = state.playerPoints[i];
       $('pcol' + i).classList.toggle('leading', state.playerPoints[i] === maxPts && maxPts > 0);
@@ -966,7 +987,7 @@
       }else{
         box.style.display = 'flex';
         var lines = [];
-        for(var j=0;j<4;j++){
+        for(var j=0;j<count;j++){
           if(j === i) continue;
           var net = state.payMatrix[i][j] - state.payMatrix[j][i]; // >0: i owes j
           if(net > 0){
@@ -980,78 +1001,72 @@
     }
 
     renderLeaderboard();
-    renderSettlementCard(isBayar, settlements);
+    renderSettlement();
     renderPips(pipsBoxIndividual, state.individualRound);
-  }
-
-  // Tambahan (tidak mengubah tampilan lama di atas): kartu terpisah yang
-  // menyederhanakan seluruh hutang grup jadi transaksi paling sedikit.
-  function renderSettlementCard(isBayar, settlements){
-    var card = $('settlementCard');
-    if(!card) return;
-    if(!isBayar){
-      card.style.display = 'none';
-      return;
-    }
-    card.style.display = 'block';
-    var list = $('settlementList');
-    if(!settlements.length){
-      list.innerHTML = '<div class="history-empty">Semua sudah impas — tidak ada transaksi.</div>';
-      return;
-    }
-    list.innerHTML = settlements.map(function(tx){
-      return '<div class="settle-row">' +
-        '<div class="settle-name from">' + escapeHtml(state.playerNames[tx.from]) + '</div>' +
-        '<div class="settle-arrow">➜</div>' +
-        '<div class="settle-name to">' + escapeHtml(state.playerNames[tx.to]) + '</div>' +
-        '<div class="settle-amt">' + formatRupiah(tx.amount) + '</div>' +
-        '</div>';
-    }).join('');
   }
 
   function netBalance(i){
     var net = 0;
-    for(var j=0;j<4;j++){
+    for(var j=0;j<state.playerCount;j++){
       if(j === i) continue;
       net += state.payMatrix[j][i] - state.payMatrix[i][j]; // received minus paid
     }
     return net;
   }
 
-  // Reduce everyone's overall net balance to the smallest possible set of
-  // direct transactions (a debt is "routed" through whoever nets it out
-  // fastest, instead of everyone paying every opponent one by one).
-  function computeSimplifiedSettlements(){
-    var debtors = [];
-    var creditors = [];
-    for(var i=0;i<4;i++){
-      var net = netBalance(i);
-      if(net < 0) debtors.push({ idx: i, amt: -net });
-      else if(net > 0) creditors.push({ idx: i, amt: net });
+  function renderSettlement(){
+    if(state.individualSubMode !== 'bayar'){
+      settlementList.innerHTML = '';
+      return;
     }
-    debtors.sort(function(a,b){ return b.amt - a.amt; });
-    creditors.sort(function(a,b){ return b.amt - a.amt; });
+
+    var creditors = []; // { idx, name, amount } — amount > 0, owed TO them
+    var debtors = [];   // { idx, name, amount } — amount > 0, owed BY them
+    for(var i=0;i<state.playerCount;i++){
+      var net = netBalance(i);
+      if(net > 0) creditors.push({ idx:i, name: state.playerNames[i], amount: net });
+      else if(net < 0) debtors.push({ idx:i, name: state.playerNames[i], amount: -net });
+    }
+    // largest debt / largest credit first — minimizes the number of transactions needed
+    creditors.sort(function(a,b){ return b.amount - a.amount; });
+    debtors.sort(function(a,b){ return b.amount - a.amount; });
 
     var transactions = [];
-    var di = 0, ci = 0;
-    while(di < debtors.length && ci < creditors.length){
-      var d = debtors[di], c = creditors[ci];
-      var amt = Math.min(d.amt, c.amt);
-      if(amt > 0){
-        transactions.push({ from: d.idx, to: c.idx, amount: amt });
+    var ci = 0, di = 0;
+    while(ci < creditors.length && di < debtors.length){
+      var pay = Math.min(creditors[ci].amount, debtors[di].amount);
+      if(pay > 0){
+        transactions.push({ fromIdx: debtors[di].idx, from: debtors[di].name, toIdx: creditors[ci].idx, to: creditors[ci].name, amount: pay });
       }
-      d.amt -= amt;
-      c.amt -= amt;
-      if(d.amt === 0) di++;
-      if(c.amt === 0) ci++;
+      creditors[ci].amount -= pay;
+      debtors[di].amount -= pay;
+      if(creditors[ci].amount <= 0) ci++;
+      if(debtors[di].amount <= 0) di++;
     }
-    return transactions;
+
+    if(transactions.length === 0){
+      settlementList.innerHTML = '<div class="settle-empty">🎉 Semua sudah impas, tidak ada yang perlu transfer.</div>';
+      return;
+    }
+
+    settlementList.innerHTML = transactions.map(function(t){
+      var clsFrom = PLAYER_CLASSES[t.fromIdx];
+      var clsTo = PLAYER_CLASSES[t.toIdx];
+      return '<div class="settle-row">' +
+        '<div class="settle-who">' +
+          '<span class="n1 ' + clsFrom + '">' + escapeHtml(t.from) + '</span>' +
+          '<span class="arrow">→</span>' +
+          '<span class="n2 ' + clsTo + '">' + escapeHtml(t.to) + '</span>' +
+        '</div>' +
+        '<div class="settle-amt">' + formatRupiah(t.amount) + '</div>' +
+        '</div>';
+    }).join('');
   }
 
   function renderLeaderboard(){
     var isBayar = state.individualSubMode === 'bayar';
 
-    var rows = state.playerNames.map(function(name, i){
+    var rows = state.playerNames.slice(0, state.playerCount).map(function(name, i){
       return { name: name, score: isBayar ? netBalance(i) : state.playerPoints[i] };
     });
     var maxScore = Math.max.apply(null, rows.map(function(r){ return r.score; }));
@@ -1124,7 +1139,7 @@
             '<span class="tot">' + h.totalsAfter[i] + '</span>' +
             '</div>';
         }).join('');
-        return '<div class="hi-row"><div class="hi-round">#' + h.round + '</div>' + cells + '</div>';
+        return '<div class="hi-row" style="grid-template-columns:30px repeat(' + h.names.length + ', 1fr)"><div class="hi-round">#' + h.round + '</div>' + cells + '</div>';
       }).join('');
       historyList.innerHTML = irows;
     }
@@ -1337,7 +1352,7 @@
       if(ilast){
         state.playerPoints[ilast.winnerIndex] = Math.max(0, state.playerPoints[ilast.winnerIndex] - 1);
         if(ilast.subMode === 'bayar' && ilast.nominalApplied > 0){
-          for(var j2=0;j2<4;j2++){
+          for(var j2=0;j2<ilast.names.length;j2++){
             if(j2 === ilast.winnerIndex) continue;
             state.payMatrix[j2][ilast.winnerIndex] = Math.max(0, state.payMatrix[j2][ilast.winnerIndex] - ilast.nominalApplied);
           }
@@ -1378,10 +1393,24 @@
     showToast('Permainan telah direset.');
   });
 
+  // ---------- hard reset (wipes ALL saved data, including incompatible data from old versions) ----------
+  var hardResetModal = $('hardResetModal');
+  $('hardResetBtn').addEventListener('click', function(){
+    settingsCard.classList.remove('open');
+    hardResetModal.classList.add('open');
+  });
+  $('hardResetCancel').addEventListener('click', function(){ hardResetModal.classList.remove('open'); });
+  hardResetModal.addEventListener('click', function(e){ if(e.target === hardResetModal) hardResetModal.classList.remove('open'); });
+  $('hardResetConfirm').addEventListener('click', function(){
+    try{ localStorage.removeItem(STORAGE_KEY); }catch(e){}
+    location.reload();
+  });
+
   // ---------- settings ----------
   var settingsCard = $('settingsCard');
   var settingsSelectedMode = state.gameMode;
   var settingsSelectedSubMode = state.individualSubMode;
+  var settingsSelectedCount = state.playerCount;
 
   function applySettingsModeUI(){
     $('modeBtnTeam').classList.toggle('active', settingsSelectedMode === 'team');
@@ -1392,16 +1421,26 @@
     $('subModeBtnPoints').classList.toggle('active', settingsSelectedSubMode === 'points');
     $('subModeBtnBayar').classList.toggle('active', settingsSelectedSubMode === 'bayar');
     $('fieldGroupNominal').classList.toggle('active', settingsSelectedSubMode === 'bayar');
+
+    $('countBtn2').classList.toggle('active', settingsSelectedCount === 2);
+    $('countBtn3').classList.toggle('active', settingsSelectedCount === 3);
+    $('countBtn4').classList.toggle('active', settingsSelectedCount === 4);
+    $('fieldPlayer3').style.display = settingsSelectedCount >= 3 ? '' : 'none';
+    $('fieldPlayer4').style.display = settingsSelectedCount >= 4 ? '' : 'none';
   }
 
   $('modeBtnTeam').addEventListener('click', function(){ settingsSelectedMode = 'team'; applySettingsModeUI(); });
   $('modeBtnIndividual').addEventListener('click', function(){ settingsSelectedMode = 'individual'; applySettingsModeUI(); });
   $('subModeBtnPoints').addEventListener('click', function(){ settingsSelectedSubMode = 'points'; applySettingsModeUI(); });
   $('subModeBtnBayar').addEventListener('click', function(){ settingsSelectedSubMode = 'bayar'; applySettingsModeUI(); });
+  $('countBtn2').addEventListener('click', function(){ settingsSelectedCount = 2; applySettingsModeUI(); });
+  $('countBtn3').addEventListener('click', function(){ settingsSelectedCount = 3; applySettingsModeUI(); });
+  $('countBtn4').addEventListener('click', function(){ settingsSelectedCount = 4; applySettingsModeUI(); });
 
   $('settingsBtn').addEventListener('click', function(){
     settingsSelectedMode = state.gameMode;
     settingsSelectedSubMode = state.individualSubMode;
+    settingsSelectedCount = state.playerCount;
     $('inputTeam1').value = state.team1Name;
     $('inputTeam2').value = state.team2Name;
     $('inputMax').value = state.maxPoints;
@@ -1439,10 +1478,13 @@
     var nom = parseInt(nomRaw, 10);
     state.bayarNominal = (nomRaw !== '' && !isNaN(nom) && nom >= 0) ? nom : 0;
 
+    var countChanged = state.playerCount !== settingsSelectedCount;
     state.gameMode = settingsSelectedMode;
     state.individualSubMode = settingsSelectedSubMode;
+    state.playerCount = settingsSelectedCount;
     lastTurnAdd = null;
     updateUndoTurnBtnState();
+    if(countChanged) buildPlayersGrid();
 
     settingsCard.classList.remove('open');
     render();
