@@ -3,11 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#12161b">
 <title>Domino Mandan — Scorekeeper</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
   :root{
+    color-scheme: dark;
     --bg: #12161b;
     --bg-raise: #191e25;
     --card: #1d232b;
@@ -42,7 +45,8 @@
     --shadow: 0 10px 30px rgba(0,0,0,0.35);
   }
 
-  *{box-sizing:border-box; -webkit-tap-highlight-color: transparent;}
+  *{box-sizing:border-box; -webkit-tap-highlight-color: transparent; forced-color-adjust: none;}
+  html{background:var(--bg);}
   html,body{margin:0;padding:0; overflow-x:hidden; width:100%;}
   body{
     background:
@@ -390,6 +394,40 @@
   .hi-p.top .add{color:var(--gold);}
   .hi-p .tot{font-size:13px; font-weight:800; font-family:'Barlow Condensed'; color:var(--ink);}
 
+  /* ---------- login overlay (phone auth) ---------- */
+  .login-overlay{
+    position:fixed; inset:0; z-index:300; background:var(--bg);
+    display:flex; align-items:center; justify-content:center; padding:20px;
+  }
+  .login-overlay.hidden{display:none;}
+  .login-box{
+    width:100%; max-width:380px; background:var(--card); border:1px solid var(--line);
+    border-radius:var(--radius); padding:24px 20px; box-shadow:var(--shadow);
+  }
+  .login-brand{text-align:center; margin-bottom:10px;}
+  .login-brand h1{
+    font-family:'Barlow Condensed'; font-weight:800; font-size:30px; margin:2px 0 0; letter-spacing:.01em;
+  }
+  .login-brand h1 span{color:var(--gold);}
+  .login-sub{font-size:13px; color:var(--ink-dim); line-height:1.5; text-align:center; margin:0 0 16px;}
+  .login-config-warning{
+    background:var(--t2-dim); border:1px solid rgba(193,68,60,0.4); color:#f0b3ae;
+    font-size:12px; line-height:1.5; padding:10px 12px; border-radius:10px; margin-bottom:14px;
+  }
+  .login-config-warning code{background:rgba(0,0,0,0.25); padding:1px 5px; border-radius:4px;}
+  .login-status{min-height:18px; font-size:12.5px; color:var(--ink-dim); text-align:center; margin:12px 0 0;}
+  .login-status.err{color:var(--bad);}
+  .login-status.ok{color:var(--good);}
+
+  .sync-pill{
+    width:34px; height:34px; border-radius:12px; border:1px solid var(--line);
+    background:var(--card); display:flex; align-items:center; justify-content:center;
+    font-size:11px; color:var(--ink-faint);
+  }
+  .sync-pill.online{color:var(--good);}
+  .sync-pill.offline{color:var(--bad);}
+  .sync-pill.syncing{color:var(--gold);}
+
   /* ---------- modal ---------- */
   .modal-overlay{
     position:fixed; inset:0; background:rgba(8,10,13,0.72); backdrop-filter:blur(3px);
@@ -458,6 +496,46 @@
 </head>
 <body>
 
+<!-- Firebase SDK (compat build — works with plain <script> + global `firebase` namespace) -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+
+<!-- LOGIN OVERLAY (Phone Authentication) -->
+<div class="login-overlay" id="loginOverlay">
+  <div class="login-box">
+    <div class="login-brand">
+      <span class="eyebrow">Skor Meja</span>
+      <h1>DOMINO <span>MANDAN</span></h1>
+    </div>
+    <p class="login-sub">Masuk pakai nomor HP untuk gabung ke meja bersama. Semua yang login lihat &amp; update skor yang sama secara real-time.</p>
+
+    <div id="loginConfigWarning" class="login-config-warning" style="display:none">
+      ⚠️ Firebase belum dikonfigurasi. Isi <code>firebaseConfig</code> di bagian atas script dengan config dari Firebase Console project kamu.
+    </div>
+
+    <div id="phoneStep">
+      <div class="field">
+        <label>Nomor HP (format internasional)</label>
+        <input type="tel" id="loginPhone" placeholder="+6281234567890">
+      </div>
+      <button class="btn primary" id="sendOtpBtn" style="width:100%">Kirim Kode OTP</button>
+      <div id="recaptcha-container" style="margin-top:10px;"></div>
+    </div>
+
+    <div id="otpStep" style="display:none">
+      <div class="field">
+        <label>Kode OTP (SMS)</label>
+        <input type="text" id="loginOtp" inputmode="numeric" placeholder="123456">
+      </div>
+      <button class="btn primary" id="verifyOtpBtn" style="width:100%">Verifikasi &amp; Masuk</button>
+      <button class="btn" id="backToPhoneBtn" style="width:100%; margin-top:8px;">← Ganti Nomor</button>
+    </div>
+
+    <p class="login-status" id="loginStatus"></p>
+  </div>
+</div>
+
 <div class="toast-wrap" id="toastWrap"></div>
 
 <header>
@@ -466,6 +544,8 @@
     <h1>DOMINO <span>MANDAN</span></h1>
   </div>
   <div class="header-actions">
+    <span class="sync-pill" id="syncPill" title="Status sinkronisasi">●</span>
+    <button class="icon-btn" id="logoutBtn" title="Keluar">⎋</button>
     <button class="icon-btn" id="fullscreenBtn" title="Fullscreen">⛶</button>
     <button class="icon-btn" id="settingsBtn" title="Pengaturan">⚙</button>
   </div>
@@ -708,6 +788,44 @@
 (function(){
   'use strict';
 
+  // ============================================================
+  // FIREBASE CONFIG — paste the config object from:
+  // Firebase Console → brewbah-39842 → Project settings → Your apps → Web app
+  // ============================================================
+  var firebaseConfig = {
+    apiKey: "AIzaSyBzyKNb9eK9BvgkFsbSK1HjoYPYzuoDEUs",
+    authDomain: "brewbah-39842.firebaseapp.com",
+    databaseURL: "https://brewbah-39842-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "brewbah-39842",
+    storageBucket: "brewbah-39842.firebasestorage.app",
+    messagingSenderId: "624348105784",
+    appId: "1:624348105784:web:03783c7dc12fbe9a012acd",
+    measurementId: "G-00XHVCCRNN"
+  };
+  // Shared table: every device that signs in writes/reads this exact document,
+  // so everyone sees the same live scoreboard in real time.
+  var FIRESTORE_COLLECTION = 'domino-mandan-tables';
+  var FIRESTORE_DOC_ID = 'shared';
+  var firebaseReady = firebaseConfig.apiKey.indexOf('PASTE_') !== 0;
+
+  var fbApp = null, fbAuth = null, fbDb = null, tableDocRef = null;
+  var unsubscribeSnapshot = null;
+  var applyingRemoteUpdate = false; // guards against re-pushing a snapshot we just received
+  var confirmationResult = null;
+  var recaptchaVerifier = null;
+
+  if(firebaseReady){
+    try{
+      fbApp = firebase.initializeApp(firebaseConfig);
+      fbAuth = firebase.auth();
+      fbDb = firebase.firestore();
+      tableDocRef = fbDb.collection(FIRESTORE_COLLECTION).doc(FIRESTORE_DOC_ID);
+    }catch(e){
+      console.error('Firebase init error:', e);
+      firebaseReady = false;
+    }
+  }
+
   var STORAGE_KEY = 'dominoMandanGame';
   var PLAYER_CLASSES = ['t1','t2','p3','p4'];
 
@@ -770,6 +888,23 @@
 
   function saveState(){
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    pushStateToFirestore();
+  }
+
+  function pushStateToFirestore(){
+    if(!firebaseReady || !tableDocRef || applyingRemoteUpdate) return;
+    if(!fbAuth.currentUser) return;
+    setSyncPill('syncing');
+    tableDocRef.set(state)
+      .then(function(){ setSyncPill('online'); })
+      .catch(function(e){ console.error('Firestore write error:', e); setSyncPill('offline'); });
+  }
+
+  function setSyncPill(mode){
+    var pill = $('syncPill');
+    if(!pill) return;
+    pill.className = 'sync-pill ' + mode;
+    pill.title = mode === 'online' ? 'Tersinkron' : (mode === 'syncing' ? 'Menyinkronkan…' : 'Offline / belum tersambung');
   }
 
   // ---------- DOM refs ----------
@@ -1500,6 +1635,133 @@
       document.exitFullscreen();
     }
   });
+
+  // ============================================================
+  // FIREBASE PHONE AUTHENTICATION + FIRESTORE LIVE SYNC
+  // ============================================================
+  var loginOverlay = $('loginOverlay');
+  var loginStatus = $('loginStatus');
+
+  function setLoginStatus(msg, kind){
+    loginStatus.textContent = msg || '';
+    loginStatus.className = 'login-status' + (kind ? ' ' + kind : '');
+  }
+
+  if(!firebaseReady){
+    // Config not filled in yet — don't block the app behind a login that can never succeed.
+    // Work in local-only mode (same as before Firebase was added).
+    loginOverlay.classList.add('hidden');
+    $('logoutBtn').style.display = 'none';
+    setSyncPill('offline');
+    setTimeout(function(){
+      showToast('Firebase belum dikonfigurasi — jalan mode lokal (tidak sinkron online).');
+    }, 400);
+  }else{
+    // Invisible reCAPTCHA tied to the "Kirim Kode OTP" button
+    recaptchaVerifier = new firebase.auth.RecaptchaVerifier('recaptcha-container', {
+      size: 'invisible'
+    });
+
+    $('sendOtpBtn').addEventListener('click', function(){
+      var phone = $('loginPhone').value.trim();
+      if(!phone || phone.charAt(0) !== '+'){
+        setLoginStatus('Masukkan nomor dengan kode negara, contoh: +6281234567890', 'err');
+        return;
+      }
+      $('sendOtpBtn').disabled = true;
+      setLoginStatus('Mengirim kode OTP…');
+      fbAuth.signInWithPhoneNumber(phone, recaptchaVerifier)
+        .then(function(result){
+          confirmationResult = result;
+          $('phoneStep').style.display = 'none';
+          $('otpStep').style.display = 'block';
+          setLoginStatus('Kode OTP terkirim via SMS.', 'ok');
+        })
+        .catch(function(e){
+          console.error(e);
+          setLoginStatus('Gagal kirim OTP: ' + (e.message || e.code), 'err');
+          if(recaptchaVerifier && recaptchaVerifier.render){
+            recaptchaVerifier.render().then(function(widgetId){
+              if(window.grecaptcha) window.grecaptcha.reset(widgetId);
+            });
+          }
+        })
+        .finally(function(){ $('sendOtpBtn').disabled = false; });
+    });
+
+    $('verifyOtpBtn').addEventListener('click', function(){
+      var code = $('loginOtp').value.trim();
+      if(!code || !confirmationResult){
+        setLoginStatus('Masukkan kode OTP yang kamu terima.', 'err');
+        return;
+      }
+      $('verifyOtpBtn').disabled = true;
+      setLoginStatus('Memverifikasi…');
+      confirmationResult.confirm(code)
+        .catch(function(e){
+          console.error(e);
+          setLoginStatus('Kode salah/kedaluwarsa: ' + (e.message || e.code), 'err');
+        })
+        .finally(function(){ $('verifyOtpBtn').disabled = false; });
+    });
+
+    $('backToPhoneBtn').addEventListener('click', function(){
+      $('otpStep').style.display = 'none';
+      $('phoneStep').style.display = 'block';
+      $('loginOtp').value = '';
+      setLoginStatus('');
+    });
+
+    $('logoutBtn').addEventListener('click', function(){
+      fbAuth.signOut();
+    });
+
+    fbAuth.onAuthStateChanged(function(user){
+      if(user){
+        loginOverlay.classList.add('hidden');
+        setSyncPill('syncing');
+        attachTableListener();
+      }else{
+        loginOverlay.classList.remove('hidden');
+        $('phoneStep').style.display = 'block';
+        $('otpStep').style.display = 'none';
+        $('loginPhone').value = '';
+        $('loginOtp').value = '';
+        setLoginStatus('');
+        detachTableListener();
+      }
+    });
+  }
+
+  function attachTableListener(){
+    if(!firebaseReady || !tableDocRef || unsubscribeSnapshot) return;
+    unsubscribeSnapshot = tableDocRef.onSnapshot(function(doc){
+      applyingRemoteUpdate = true;
+      try{
+        if(doc.exists){
+          var remote = doc.data();
+          var merged = Object.assign({}, defaultState, state, remote);
+          state = merged;
+        }else{
+          // table doesn't exist yet in Firestore — seed it with our current local state
+          tableDocRef.set(state);
+        }
+        render();
+        checkAutoFinish();
+        setSyncPill('online');
+      }catch(e){
+        console.error('Error applying remote snapshot:', e);
+      }
+      applyingRemoteUpdate = false;
+    }, function(err){
+      console.error('Snapshot listener error:', err);
+      setSyncPill('offline');
+    });
+  }
+
+  function detachTableListener(){
+    if(unsubscribeSnapshot){ unsubscribeSnapshot(); unsubscribeSnapshot = null; }
+  }
 
   // ---------- init ----------
   render();
