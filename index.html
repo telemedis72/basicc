@@ -475,7 +475,7 @@
 <!-- Firebase SDK (compat build — works with plain <script> + global `firebase` namespace) -->
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 
 <div class="toast-wrap" id="toastWrap"></div>
 
@@ -676,7 +676,7 @@
     <div id="historyList"><div class="history-empty">Belum ada ronde yang selesai.</div></div>
   </section>
 
-  <footer>Data tersimpan otomatis di perangkat ini · Sinkron real-time lewat Firebase saat online</footer>
+  <footer>Data tersimpan otomatis di perangkat ini · Sinkron real-time lewat Firebase saat online<div id="diagText" style="margin-top:6px"></div></footer>
 </main>
 
 <!-- UNDO CONFIRM MODAL -->
@@ -743,13 +743,12 @@
     appId: "1:624348105784:web:03783c7dc12fbe9a012acd",
     measurementId: "G-00XHVCCRNN"
   };
-  // Shared table: every device writes/reads this exact document,
-  // so everyone sees the same live scoreboard in real time.
-  var FIRESTORE_COLLECTION = 'domino-mandan-tables';
-  var FIRESTORE_DOC_ID = 'shared';
+  // Shared table: semua perangkat membaca/menulis path yang sama di
+  // Realtime Database, jadi semua orang melihat skor yang sama secara live.
+  var DB_PATH = 'domino-mandan-tables/shared';
   var firebaseReady = firebaseConfig.apiKey.indexOf('PASTE_') !== 0;
 
-  var fbApp = null, fbAuth = null, fbDb = null, tableDocRef = null;
+  var fbApp = null, fbAuth = null, fbDb = null, tableRef = null;
   var unsubscribeSnapshot = null;
   var applyingRemoteUpdate = false; // guards against re-pushing a snapshot we just received
   var firebaseInitError = '';
@@ -758,16 +757,8 @@
     try{
       fbApp = firebase.initializeApp(firebaseConfig);
       fbAuth = firebase.auth();
-      fbDb = firebase.firestore();
-      // Banyak jaringan/HP memblokir koneksi WebChannel default Firestore,
-      // sehingga sinkron macet tanpa error. Long polling lebih tahan.
-      try{
-        fbDb.settings({ experimentalForceLongPolling: true });
-      }catch(se){
-        // Kalau pengaturan ini ditolak, lanjut saja dengan koneksi default.
-        console.warn('Firestore settings skipped:', se);
-      }
-      tableDocRef = fbDb.collection(FIRESTORE_COLLECTION).doc(FIRESTORE_DOC_ID);
+      fbDb = firebase.database();
+      tableRef = fbDb.ref(DB_PATH);
     }catch(e){
       console.error('Firebase init error:', e);
       firebaseInitError = (e && (e.code || e.message)) || 'unknown';
@@ -837,17 +828,25 @@
 
   function saveState(){
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-    pushStateToFirestore();
+    pushState();
   }
 
-  function pushStateToFirestore(){
-    if(!firebaseReady || !tableDocRef || applyingRemoteUpdate) return;
+  function pushState(){
+    if(!firebaseReady || !tableRef || applyingRemoteUpdate) return;
     if(!fbAuth.currentUser) return;
     setSyncPill('syncing');
-    tableDocRef.set(state)
-      .then(function(){ setSyncPill('online'); })
-      .catch(function(e){ console.error('Firestore write error:', e); setSyncPill('offline'); });
+    // JSON round-trip: Realtime Database menolak nilai undefined/NaN.
+    tableRef.set(JSON.parse(JSON.stringify(state)))
+      .then(function(){ setSyncPill('online'); setDiag('Tersinkron ✓'); })
+      .catch(function(e){
+        console.error('Database write error:', e);
+        setSyncPill('offline');
+        setDiag('Gagal menulis: ' + (e.code || e.message));
+        showToast('Gagal menulis: ' + (e.code || e.message));
+      });
   }
+
+  function setDiag(t){ var d = document.getElementById('diagText'); if(d) d.textContent = t || ''; }
 
   function setSyncPill(mode){
     var pill = $('syncPill');
@@ -1586,10 +1585,9 @@
   });
 
   // ============================================================
-  // FIREBASE ANONYMOUS AUTH + FIRESTORE LIVE SYNC
+  // FIREBASE ANONYMOUS AUTH + REALTIME DATABASE LIVE SYNC
   // ============================================================
   if(!firebaseReady){
-    // Config belum diisi / init gagal — jalan mode lokal saja.
     setSyncPill('offline');
     setTimeout(function(){
       showToast('Firebase gagal dimulai' + (firebaseInitError ? ' (' + firebaseInitError + ')' : '') + ' — jalan mode lokal (tidak sinkron online).');
@@ -1601,7 +1599,8 @@
     setTimeout(function(){
       var p = $('syncPill');
       if(p && p.className.indexOf('online') === -1){
-        showToast('Belum tersambung ke database. Cek koneksi internet & rules Firestore.');
+        setDiag('Belum tersambung. Cek Rules Realtime Database & koneksi internet.');
+        showToast('Belum tersambung ke database. Cek Rules Realtime Database.');
       }
     }, 10000);
 
@@ -1614,42 +1613,96 @@
       }
     });
 
-    // Login otomatis tanpa OTP. Sesi anonim disimpan Firebase di browser,
-    // jadi perangkat yang sama tetap pakai akun anonim yang sama.
+    // Login otomatis tanpa OTP.
     fbAuth.signInAnonymously().catch(function(e){
       console.error('Anonymous sign-in error:', e);
       setSyncPill('offline');
       var msg = (e && e.code === 'auth/operation-not-allowed')
         ? 'Aktifkan provider Anonymous di Firebase Console → Authentication.'
         : 'Gagal login anonim: ' + ((e && (e.code || e.message)) || 'unknown');
+      setDiag(msg);
       showToast(msg);
     });
   }
 
+  // Realtime Database membuang array kosong & bisa mengubah array jadi objek,
+  // jadi data dari server dirapikan dulu sebelum dipakai.
+  function toArr(v){
+    if(Array.isArray(v)) return v;
+    if(v && typeof v === 'object'){
+      return Object.keys(v).sort(function(a,b){ return a - b; }).map(function(k){ return v[k]; });
+    }
+    return [];
+  }
+
+  function sanitizeRemote(r){
+    var out = Object.assign({}, defaultState, r);
+    out.history = toArr(r.history);
+    out.individualHistory = toArr(r.individualHistory).map(function(h){
+      h.names = toArr(h.names);
+      h.totalsAfter = toArr(h.totalsAfter);
+      return h;
+    });
+    var names = toArr(r.playerNames);
+    out.playerNames = defaultState.playerNames.map(function(d, i){ return names[i] || d; });
+    var pts = toArr(r.playerPoints);
+    out.playerPoints = [0,1,2,3].map(function(i){ return Number(pts[i]) || 0; });
+    var pm = toArr(r.payMatrix);
+    out.payMatrix = [0,1,2,3].map(function(i){
+      var row = toArr(pm[i]);
+      return [0,1,2,3].map(function(j){ return Number(row[j]) || 0; });
+    });
+    if([2,3,4].indexOf(out.playerCount) === -1) out.playerCount = 4;
+    if(out.individualSubMode !== 'points' && out.individualSubMode !== 'bayar') out.individualSubMode = 'points';
+    if(out.gameMode !== 'team' && out.gameMode !== 'individual') out.gameMode = 'team';
+    out.bayarNominal = Math.max(0, parseInt(out.bayarNominal, 10) || 0);
+    return out;
+  }
+
   function attachTableListener(){
-    if(!firebaseReady || !tableDocRef || unsubscribeSnapshot) return;
-    unsubscribeSnapshot = tableDocRef.onSnapshot(function(doc){
+    if(!firebaseReady || !tableRef || unsubscribeSnapshot) return;
+    setDiag('Menghubungi database…');
+
+    var connRef = fbDb.ref('.info/connected');
+    var connHandler = connRef.on('value', function(s){
+      if(s.val() === true){
+        setSyncPill('online');
+        setDiag('Tersambung ✓');
+      }else{
+        setSyncPill('syncing');
+        setDiag('Menghubungi database…');
+      }
+    });
+
+    var valHandler = tableRef.on('value', function(snap){
+      var remote = snap.val();
+      var seed = !remote;
       applyingRemoteUpdate = true;
       try{
-        if(doc.exists){
-          var remote = doc.data();
-          var merged = Object.assign({}, defaultState, state, remote);
-          state = merged;
-        }else{
-          // table doesn't exist yet in Firestore — seed it with our current local state
-          tableDocRef.set(state);
+        if(remote){
+          var oldCount = state.playerCount;
+          state = sanitizeRemote(remote);
+          if(state.playerCount !== oldCount) buildPlayersGrid();
         }
         render();
         checkAutoFinish();
-        setSyncPill('online');
       }catch(e){
-        console.error('Error applying remote snapshot:', e);
+        console.error('Error applying remote data:', e);
       }
       applyingRemoteUpdate = false;
+      // Database masih kosong — isi dengan data lokal sekarang.
+      if(seed) pushState();
     }, function(err){
-      console.error('Snapshot listener error:', err);
+      console.error('Database listener error:', err);
       setSyncPill('offline');
+      setDiag('Error database: ' + (err.code || err.message));
+      showToast('Error database: ' + (err.code || err.message));
     });
+
+    unsubscribeSnapshot = function(){
+      tableRef.off('value', valHandler);
+      connRef.off('value', connHandler);
+    };
   }
 
   function detachTableListener(){
@@ -1662,4 +1715,3 @@
 </script>
 </body>
 </html>
-
