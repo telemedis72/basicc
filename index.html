@@ -752,6 +752,7 @@
   var fbApp = null, fbAuth = null, fbDb = null, tableDocRef = null;
   var unsubscribeSnapshot = null;
   var applyingRemoteUpdate = false; // guards against re-pushing a snapshot we just received
+  var firebaseInitError = '';
 
   if(firebaseReady){
     try{
@@ -760,10 +761,16 @@
       fbDb = firebase.firestore();
       // Banyak jaringan/HP memblokir koneksi WebChannel default Firestore,
       // sehingga sinkron macet tanpa error. Long polling lebih tahan.
-      fbDb.settings({ experimentalForceLongPolling: true, merge: true });
+      try{
+        fbDb.settings({ experimentalForceLongPolling: true });
+      }catch(se){
+        // Kalau pengaturan ini ditolak, lanjut saja dengan koneksi default.
+        console.warn('Firestore settings skipped:', se);
+      }
       tableDocRef = fbDb.collection(FIRESTORE_COLLECTION).doc(FIRESTORE_DOC_ID);
     }catch(e){
       console.error('Firebase init error:', e);
+      firebaseInitError = (e && (e.code || e.message)) || 'unknown';
       firebaseReady = false;
     }
   }
@@ -1585,7 +1592,7 @@
     // Config belum diisi / init gagal — jalan mode lokal saja.
     setSyncPill('offline');
     setTimeout(function(){
-      showToast('Firebase belum dikonfigurasi — jalan mode lokal (tidak sinkron online).');
+      showToast('Firebase gagal dimulai' + (firebaseInitError ? ' (' + firebaseInitError + ')' : '') + ' — jalan mode lokal (tidak sinkron online).');
     }, 400);
   }else{
     setSyncPill('syncing');
@@ -1655,3 +1662,4 @@
 </script>
 </body>
 </html>
+
