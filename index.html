@@ -758,6 +758,9 @@
       fbApp = firebase.initializeApp(firebaseConfig);
       fbAuth = firebase.auth();
       fbDb = firebase.firestore();
+      // Banyak jaringan/HP memblokir koneksi WebChannel default Firestore,
+      // sehingga sinkron macet tanpa error. Long polling lebih tahan.
+      fbDb.settings({ experimentalForceLongPolling: true, merge: true });
       tableDocRef = fbDb.collection(FIRESTORE_COLLECTION).doc(FIRESTORE_DOC_ID);
     }catch(e){
       console.error('Firebase init error:', e);
@@ -1586,6 +1589,14 @@
     }, 400);
   }else{
     setSyncPill('syncing');
+
+    // Kalau 10 detik belum tersambung, beri tahu supaya tidak menebak-nebak.
+    setTimeout(function(){
+      var p = $('syncPill');
+      if(p && p.className.indexOf('online') === -1){
+        showToast('Belum tersambung ke database. Cek koneksi internet & rules Firestore.');
+      }
+    }, 10000);
 
     fbAuth.onAuthStateChanged(function(user){
       if(user){
